@@ -1,0 +1,43 @@
+{
+  "name": "minitel-ds",
+  "version": "1.0.0",
+  "description": "A Minitel / Videotex design system: 8x10 web fonts, CSS components, a faithful Videotex terminal emulator with a WebGL CRT, and a Télétel service framework.",
+  "license": "MIT",
+  "type": "module",
+  "main": "src/js/index.js",
+  "module": "src/js/index.js",
+  "exports": {
+    ".": "./src/js/index.js",
+    "./elements": "./src/js/elements/index.js",
+    "./css": "./src/css/minitel.css",
+    "./css/*": "./src/css/*",
+    "./fonts/*": "./src/fonts/*",
+    "./*": "./src/js/*"
+  },
+  "files": [
+    "src"
+  ],
+  "scripts": {
+    "dev": "node tools/serve.mjs",
+    "test": "node --test test/*.test.js",
+    "build:font": "node tools/build-font.mjs"
+  },
+  "keywords": [
+    "minitel",
+    "videotex",
+    "teletel",
+    "design-system",
+    "css",
+    "retro",
+    "crt",
+    "web-components",
+    "terminal-emulator"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bob6664569/minitel.git"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

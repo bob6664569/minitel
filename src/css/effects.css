@@ -1,0 +1,118 @@
+/*
+ * CRT effects for HTML screens (the canvas terminal has its own shader).
+ *
+ *   <div class="mt-screen mt-crt">...</div>
+ *
+ * Scanlines line up with the font's pixel rows (ten per character row),
+ * text glows like phosphor, the glass is vignetted and slightly bulged.
+ * Add .is-off / .is-on to animate the tube.
+ */
+
+.mt-crt {
+  --mt-crt-radius: 4.5% / 6%;
+  position: relative;
+  isolation: isolate;
+  border-radius: var(--mt-crt-radius);
+  background:
+    radial-gradient(120% 110% at 50% 45%, color-mix(in srgb, var(--mt-glass) 80%, #fff 3%) 0%, var(--mt-glass) 60%, var(--mt-glass-edge) 100%);
+  box-shadow:
+    inset 0 0 calc(var(--mt-row, 20px) * 2.5) rgba(0, 0, 0, 0.85),
+    inset 0 0 calc(var(--mt-row, 20px) * 0.4) rgba(0, 0, 0, 0.9);
+}
+
+.mt-crt .mt-page {
+  background: transparent;
+}
+
+.mt-crt .mt-page,
+.mt-crt.mt-flow,
+.mt-crt .mt-crt__content {
+  text-shadow:
+    0 0 calc(var(--mt-row) * 0.1 * var(--mt-glow)) color-mix(in srgb, currentColor 70%, transparent),
+    0 0 calc(var(--mt-row) * 0.55 * var(--mt-glow)) color-mix(in srgb, currentColor 30%, transparent);
+}
+
+/* Scanlines, one per font pixel row */
+.mt-crt::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  border-radius: inherit;
+  background:
+    repeating-linear-gradient(
+      180deg,
+      transparent 0,
+      transparent calc(var(--mt-row, 20px) / 20),
+      rgba(0, 0, 0, var(--mt-scanlines)) calc(var(--mt-row, 20px) / 20),
+      rgba(0, 0, 0, var(--mt-scanlines)) calc(var(--mt-row, 20px) / 10)
+    );
+  background-position: 0 var(--mt-pad-y, 0);
+  mix-blend-mode: multiply;
+}
+
+/* Glass: vignette and a soft reflection */
+.mt-crt::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  border-radius: inherit;
+  background:
+    radial-gradient(90% 85% at 50% 50%, transparent 55%, rgba(0, 0, 0, 0.55) 100%),
+    linear-gradient(160deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.015) 30%, transparent 45%);
+  animation: mt-crt-flicker 6s infinite steps(60);
+}
+
+@keyframes mt-crt-flicker {
+  0%, 100% { opacity: 1; }
+  40% { opacity: 0.97; }
+  41% { opacity: 1; }
+  72% { opacity: 0.985; }
+}
+
+/* Power animations */
+.mt-crt.is-on > * {
+  animation: mt-power-on 0.9s cubic-bezier(0.2, 0.7, 0.3, 1) both;
+}
+
+.mt-crt.is-off > * {
+  animation: mt-power-off 0.55s cubic-bezier(0.6, 0, 0.8, 0.4) both;
+}
+
+@keyframes mt-power-on {
+  0% { transform: scale(1, 0.004); filter: brightness(8); opacity: 1; }
+  25% { transform: scale(1, 0.004); filter: brightness(8); }
+  45% { transform: scale(1, 1); filter: brightness(2.2) saturate(0.6); }
+  100% { transform: scale(1, 1); filter: none; }
+}
+
+@keyframes mt-power-off {
+  0% { transform: scale(1, 1); filter: none; }
+  45% { transform: scale(1, 0.004); filter: brightness(6); }
+  70% { transform: scale(0.004, 0.004); filter: brightness(10); opacity: 1; }
+  100% { transform: scale(0, 0); filter: brightness(10); opacity: 0; }
+}
+
+/* Paper theme: no tube */
+[data-mt-theme="paper"] .mt-crt,
+.mt-crt[data-mt-theme="paper"] {
+  box-shadow: none;
+}
+
+[data-mt-theme="paper"] .mt-crt::before,
+[data-mt-theme="paper"] .mt-crt::after,
+.mt-crt[data-mt-theme="paper"]::before,
+.mt-crt[data-mt-theme="paper"]::after {
+  content: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mt-crt::before,
+  .mt-crt.is-on > *,
+  .mt-crt.is-off > * {
+    animation: none;
+  }
+}

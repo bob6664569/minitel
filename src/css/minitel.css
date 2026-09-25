@@ -1,0 +1,18 @@
+/*
+ * minitel — a Videotex design system.
+ *
+ * Import this file, then opt in with class="mt" on <body> (or any element):
+ *   <link rel="stylesheet" href="src/css/minitel.css">
+ *   <body class="mt" data-mt-theme="color">
+ *
+ * Everything lives in cascade layers, so your own unlayered CSS always wins.
+ */
+@layer mt.tokens, mt.base, mt.components, mt.device, mt.utilities, mt.effects;
+
+@import url("fonts.css");
+@import url("tokens.css") layer(mt.tokens);
+@import url("base.css") layer(mt.base);
+@import url("components.css") layer(mt.components);
+@import url("device.css") layer(mt.device);
+@import url("utilities.css") layer(mt.utilities);
+@import url("effects.css") layer(mt.effects);

@@ -1,0 +1,158 @@
+/*
+ * Design tokens.
+ *
+ * The palette is the Videotex one: eight colours, in the attribute order
+ * black, red, green, yellow, blue, magenta, cyan, white. Every component
+ * uses these tokens, so switching theme (colour, monochrome, amber, green
+ * phosphor, paper) re-skins everything:
+ *
+ *   <body data-mt-theme="mono">   or any element
+ *
+ * Geometry is counted in character cells: one cell is 8x10 font pixels,
+ * i.e. 0.8em x 1em. --mt-col and --mt-row hold the cell size of the nearest
+ * .mt / .mt-screen root as absolute lengths, so nested double-size text
+ * keeps aligning on the page grid.
+ */
+
+@property --mt-row {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 20px;
+}
+
+@property --mt-col {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 16px;
+}
+
+/* 1. Raw palette, geometry and effects ---------------------------------- */
+
+:root {
+  /* Colour Minitel (softened phosphor primaries) */
+  --mt-black: #000000;
+  --mt-red: #ff3a2e;
+  --mt-green: #34e854;
+  --mt-yellow: #ffec48;
+  --mt-blue: #3454ff;
+  --mt-magenta: #ec40ec;
+  --mt-cyan: #40e8ff;
+  --mt-white: #f6f6ff;
+
+  /* Monochrome phosphor (mono / amber / green themes) */
+  --mt-phosphor: #e8f0ff;
+
+  /* Glass of the CRT, around the picture */
+  --mt-glass: #0b0e0e;
+  --mt-glass-edge: #020303;
+
+  /* Type */
+  --mt-font: "Minitel", "Courier New", monospace;
+  --mt-font-size: 20px; /* one row: keep a multiple of 10px for crisp pixels */
+
+  /* Grid */
+  --mt-cols: 40;
+  --mt-rows: 25;
+
+  /* Effects */
+  --mt-glow: 1;
+  --mt-scanlines: 0.22;
+  --mt-blink: 0.96s;
+  --mt-cursor-blink: 0.8s;
+}
+
+/* Monochrome Minitel: colours become the STUM1B grey levels of the phosphor. */
+[data-mt-theme="mono"],
+[data-mt-theme="amber"],
+[data-mt-theme="green"] {
+  --mt-black: #000000;
+  --mt-blue: color-mix(in srgb, var(--mt-phosphor) 40%, #000);
+  --mt-red: color-mix(in srgb, var(--mt-phosphor) 50%, #000);
+  --mt-magenta: color-mix(in srgb, var(--mt-phosphor) 60%, #000);
+  --mt-green: color-mix(in srgb, var(--mt-phosphor) 70%, #000);
+  --mt-cyan: color-mix(in srgb, var(--mt-phosphor) 80%, #000);
+  --mt-yellow: color-mix(in srgb, var(--mt-phosphor) 90%, #000);
+  --mt-white: var(--mt-phosphor);
+  --mt-glass: #0c0e10;
+}
+
+[data-mt-theme="amber"] {
+  --mt-phosphor: #ffb040;
+  --mt-glass: #100b06;
+}
+
+[data-mt-theme="green"] {
+  --mt-phosphor: #6eff8c;
+  --mt-glass: #06100a;
+}
+
+/* Paper: the printed guide look — ink on cream, colours as inks. */
+[data-mt-theme="paper"] {
+  --mt-black: #f2ead7;
+  --mt-white: #1c1a17;
+  --mt-red: #c8321f;
+  --mt-green: #1d8a4a;
+  --mt-yellow: #b88a00;
+  --mt-blue: #2743d6;
+  --mt-magenta: #a02fa0;
+  --mt-cyan: #0e7f96;
+  --mt-glass: #e9e0ca;
+  --mt-glass-edge: #d6ccb2;
+  --mt-glow: 0;
+  --mt-scanlines: 0;
+}
+
+[data-mt-theme="color"] {
+  --mt-black: #000000;
+  --mt-red: #ff3a2e;
+  --mt-green: #34e854;
+  --mt-yellow: #ffec48;
+  --mt-blue: #3454ff;
+  --mt-magenta: #ec40ec;
+  --mt-cyan: #40e8ff;
+  --mt-white: #f6f6ff;
+  --mt-glass: #0b0e0e;
+}
+
+/* 2. Semantic roles, recomputed at every theme root ---------------------- */
+
+:root,
+[data-mt-theme] {
+  --mt-bg: var(--mt-black);
+  --mt-fg: var(--mt-white);
+  --mt-accent: var(--mt-cyan);
+  --mt-highlight: var(--mt-yellow);
+  --mt-band: var(--mt-blue);
+  --mt-success: var(--mt-green);
+  --mt-danger: var(--mt-red);
+  --mt-special: var(--mt-magenta);
+  --mt-muted: color-mix(in srgb, var(--mt-fg) 55%, var(--mt-bg));
+  --mt-dot: color-mix(in srgb, var(--mt-fg) 72%, var(--mt-bg));
+  --mt-focus: var(--mt-yellow);
+
+  /* Readable text colour on each background */
+  --mt-on-black: var(--mt-white);
+  --mt-on-red: var(--mt-white);
+  --mt-on-green: var(--mt-black);
+  --mt-on-yellow: var(--mt-black);
+  --mt-on-blue: var(--mt-white);
+  --mt-on-magenta: var(--mt-white);
+  --mt-on-cyan: var(--mt-black);
+  --mt-on-white: var(--mt-black);
+  --mt-on-band: var(--mt-on-blue);
+}
+
+[data-mt-theme="mono"],
+[data-mt-theme="amber"],
+[data-mt-theme="green"] {
+  --mt-on-magenta: var(--mt-black);
+}
+
+[data-mt-theme="paper"] {
+  --mt-on-red: var(--mt-black);
+  --mt-on-green: var(--mt-black);
+  --mt-on-blue: var(--mt-black);
+  --mt-on-magenta: var(--mt-black);
+  --mt-on-cyan: var(--mt-black);
+  --mt-on-band: var(--mt-black);
+}

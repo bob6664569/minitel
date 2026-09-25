@@ -1,0 +1,312 @@
+/*
+ * Base: the .mt root, element defaults, and the two page models —
+ *   .mt-screen  a fixed 40x25 (or 80x25) Minitel page, scaled to fit
+ *   .mt-flow    a fluid column for regular web pages
+ */
+
+/* --------------------------------------------------------------------- */
+/* Root                                                                   */
+/* --------------------------------------------------------------------- */
+
+.mt {
+  --mt-row: 1em;
+  --mt-col: 0.8em;
+  font-family: var(--mt-font);
+  font-size: var(--mt-font-size);
+  font-stretch: 100%;
+  font-weight: normal;
+  font-style: normal;
+  font-kerning: none;
+  font-variant-ligatures: none;
+  font-synthesis: none;
+  line-height: 1;
+  letter-spacing: 0;
+  color: var(--mt-fg);
+  background-color: var(--mt-bg);
+  text-rendering: optimizeSpeed;
+  -webkit-font-smoothing: antialiased;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  tab-size: 8;
+}
+
+.mt *,
+.mt *::before,
+.mt *::after {
+  box-sizing: border-box;
+}
+
+.mt ::selection {
+  color: var(--mt-bg);
+  background: var(--mt-fg);
+}
+
+.mt :focus-visible {
+  outline: calc(var(--mt-row) / 10) solid var(--mt-focus);
+  outline-offset: calc(var(--mt-row) / 10);
+}
+
+/* Typography: the four Videotex sizes */
+.mt :where(h1, h2, h3, h4, h5, h6, p, ul, ol, dl, figure, blockquote, pre, table) {
+  margin: 0 0 var(--mt-row);
+}
+
+.mt :where(h1, h2, h3, h4, h5, h6, b, strong, th) {
+  font-weight: normal;
+}
+
+.mt :where(h1) {
+  font-size: 2em; /* double size */
+  color: var(--mt-highlight);
+}
+
+.mt :where(h2) {
+  font-size: 2em; /* double height */
+  font-stretch: 50%;
+  color: var(--mt-accent);
+}
+
+.mt :where(h3) {
+  font-stretch: 200%; /* double width */
+  color: var(--mt-fg);
+}
+
+.mt :where(h4, h5, h6) {
+  color: var(--mt-highlight);
+}
+
+.mt :where(strong, b) {
+  color: var(--mt-highlight);
+}
+
+.mt :where(em, i, cite) {
+  font-style: normal;
+  color: var(--mt-accent);
+}
+
+.mt :where(small) {
+  font-size: 1em;
+  color: var(--mt-muted);
+}
+
+.mt :where(mark) {
+  color: var(--mt-bg);
+  background: var(--mt-highlight);
+}
+
+.mt :where(a) {
+  color: var(--mt-accent);
+  text-decoration: underline;
+  text-decoration-thickness: calc(var(--mt-row) / 10);
+  text-underline-offset: calc(var(--mt-row) / 10);
+}
+
+.mt :where(a:hover) {
+  color: var(--mt-bg);
+  background: var(--mt-accent);
+  text-decoration: none;
+}
+
+.mt :where(code, kbd, samp, pre, tt) {
+  font: inherit;
+}
+
+.mt :where(code) {
+  color: var(--mt-highlight);
+}
+
+.mt :where(pre) {
+  white-space: pre;
+  overflow-x: auto;
+}
+
+.mt :where(ul, ol) {
+  padding-left: calc(var(--mt-col) * 3);
+}
+
+.mt :where(ul) {
+  list-style: none;
+}
+
+.mt :where(ul > li)::before {
+  content: "\25B6";
+  display: inline-block;
+  width: calc(var(--mt-col) * 2);
+  margin-left: calc(var(--mt-col) * -2);
+  color: var(--mt-accent);
+}
+
+.mt :where(ol) {
+  list-style: none;
+  counter-reset: mt-ol;
+}
+
+.mt :where(ol > li) {
+  counter-increment: mt-ol;
+}
+
+.mt :where(ol > li)::before {
+  content: counter(mt-ol) " ";
+  display: inline-block;
+  width: calc(var(--mt-col) * 3);
+  margin-left: calc(var(--mt-col) * -3);
+  color: var(--mt-accent);
+}
+
+.mt :where(hr) {
+  height: calc(var(--mt-row) / 3);
+  margin: calc(var(--mt-row) / 3) 0 calc(var(--mt-row) * 2 / 3);
+  border: 0;
+  background: var(--mt-fg);
+}
+
+.mt :where(img, svg, video, canvas) {
+  max-width: 100%;
+  display: block;
+}
+
+.mt :where(button, input, select, textarea) {
+  font: inherit;
+  color: inherit;
+  letter-spacing: 0;
+}
+
+.mt :where(table) {
+  border-collapse: collapse;
+}
+
+.mt :where(th, td) {
+  padding: 0 var(--mt-col) 0 0;
+  text-align: left;
+  vertical-align: top;
+}
+
+.mt :where(th) {
+  color: var(--mt-accent);
+}
+
+.mt :where(blockquote) {
+  padding-left: calc(var(--mt-col) * 2);
+  border-left: calc(var(--mt-col) / 2) solid var(--mt-band);
+  color: var(--mt-accent);
+}
+
+/* --------------------------------------------------------------------- */
+/* Fixed Minitel page                                                     */
+/* --------------------------------------------------------------------- */
+
+/*
+ * <div class="mt-screen">           40 x 25 cells, scaled to the width
+ *   <div class="mt-status">...</div> row 0
+ *   <div class="mt-at" style="--r:3; --c:5">Hello</div>
+ * </div>
+ * Place children on the grid with .mt-at (--r row 0..24, --c column 1..40,
+ * --w width, --h height), or let them flow full-width, one row each.
+ */
+.mt-screen {
+  --mt-cols: 40;
+  --mt-rows: 25;
+  --mt-pad-x: 6%;
+  --mt-pad-y: 7%;
+  container-type: inline-size;
+  position: relative;
+  display: block;
+  padding: var(--mt-pad-y) var(--mt-pad-x);
+  background: var(--mt-glass);
+  overflow: hidden;
+  font-family: var(--mt-font);
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+.mt-screen > .mt-page,
+.mt-screen > :where(:not(.mt-page)) {
+  --mt-row: calc(100cqi / var(--mt-cols) / 0.8);
+  --mt-col: calc(100cqi / var(--mt-cols));
+}
+
+/* 80 columns: same rows, half-width cells (the double-height face at 1em) */
+.mt-screen--80 {
+  --mt-cols: 80;
+}
+
+.mt-screen--80 > .mt-page,
+.mt-screen--80 > :where(:not(.mt-page)) {
+  --mt-row: calc(100cqi / 40 / 0.8);
+  --mt-col: calc(100cqi / 80);
+  font-stretch: 50%;
+}
+
+.mt-page {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(var(--mt-cols), var(--mt-col));
+  grid-template-rows: repeat(var(--mt-rows), var(--mt-row));
+  grid-auto-rows: var(--mt-row);
+  width: calc(var(--mt-cols) * var(--mt-col));
+  height: calc(var(--mt-rows) * var(--mt-row));
+  overflow: hidden;
+  font-size: var(--mt-row);
+  line-height: 1;
+  color: var(--mt-fg);
+  background: var(--mt-bg);
+  white-space: pre;
+}
+
+.mt-page > * {
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+
+/* Place an item: --r (0 = status row), --c (1..40), --w cells, --h rows */
+.mt-at {
+  grid-row: calc(var(--r, 0) + 1) / span var(--h, 1);
+  grid-column: var(--c, 1) / span var(--w, calc(var(--mt-cols) - var(--c, 1) + 1));
+}
+
+/* --------------------------------------------------------------------- */
+/* Fluid page                                                             */
+/* --------------------------------------------------------------------- */
+
+/* A readable column counted in cells; content reflows on small screens. */
+.mt-flow {
+  --mt-measure: var(--mt-cols);
+  width: 100%;
+  max-width: calc(var(--mt-measure) * var(--mt-col) + var(--mt-col) * 4);
+  margin-inline: auto;
+  padding-inline: calc(var(--mt-col) * 2);
+}
+
+.mt-flow--wide {
+  --mt-measure: 80;
+}
+
+/* Vertical rhythm in whole rows */
+.mt-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mt-gap, var(--mt-row));
+}
+
+.mt-stack > * {
+  margin: 0;
+}
+
+/* Horizontal group, gap in cells */
+.mt-cluster {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--mt-gap, calc(var(--mt-row) / 2) var(--mt-col));
+}
+
+/* Columns snapped to cells: --mt-span is the minimum column width in cells */
+.mt-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, calc(var(--mt-span, 18) * var(--mt-col))), 1fr));
+  gap: var(--mt-row) calc(var(--mt-col) * 2);
+}
+
+.mt-spacer {
+  height: var(--mt-row);
+}
