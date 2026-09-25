@@ -93,7 +93,13 @@ export class Minitel extends EventTarget {
   /* ---------------------------------------------------------------- */
 
   indicator(connected) {
-    this.term.screen.setIndicator(connected ? 'C' : 'F');
+    const { screen } = this.term;
+    screen.setIndicator(connected ? 'C' : 'F');
+    // A new call starts masked again (ESC # SP 5/15 does not survive a hang-up).
+    if (screen.revealed) {
+      screen.revealed = false;
+      screen.markAllDirty();
+    }
   }
 
   showLocal(summary = this.summary) {

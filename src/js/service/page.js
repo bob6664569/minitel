@@ -95,8 +95,13 @@ export class Page extends Videotex {
    */
   print(row, col, text, style = {}) {
     const needsDelimiter = style.bg !== undefined && col > 1 && !String(text).startsWith(' ');
+    const tall = ['tall', 'double', 'double-height', 'double-size'].includes(style.size);
     this.moveTo(row, needsDelimiter ? col - 1 : col);
-    if (needsDelimiter) this.bg(style.bg).text(' ');
+    if (needsDelimiter) {
+      // A double-height delimiter also opens the zone on the row above.
+      if (tall) this.size('tall');
+      this.bg(style.bg).text(' ');
+    }
     this.style(style);
     return this.text(text);
   }

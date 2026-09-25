@@ -221,6 +221,8 @@ export class Session extends EventTarget {
    * @param {number} field.row
    * @param {number} field.col
    * @param {number} field.length maximum characters
+   * @param {number} [field.width=length] cells per row: a longer field wraps
+   *   onto the following rows (a multi-line message box)
    * @param {string} [field.value=''] initial value
    * @param {string} [field.placeholder='.'] filler shown in empty positions
    * @param {string|number} [field.color='white']
@@ -232,34 +234,35 @@ export class Session extends EventTarget {
    */
   async input(field) {
     const f = { value: '', placeholder: '.', color: 'white', uppercase: false, secret: false, ...field };
+    const width = f.width || f.length;
     const exitKeys = new Set(f.exitKeys || FIELD_EXIT_KEYS);
     let value = f.value.slice(0, f.length);
-    const at = (i) => new Videotex().moveTo(f.row, f.col + i).color(f.color);
+    const place = (i) => [f.row + Math.floor(i / width), f.col + (i % width)];
+    const at = (i) => new Videotex().moveTo(...place(i)).color(f.color);
     const start = f.redraw === false ? new Videotex() : this.drawField(f, value);
-    this.write(start.moveTo(f.row, f.col + Math.min(value.length, f.length - 1)).cursor(true));
+    this.write(start.moveTo(...place(Math.min(value.length, f.length - 1))).cursor(true));
     try {
       for (;;) {
         const event = await this.next();
         if (event.type === 'char') {
           let ch = f.uppercase ? event.char.toUpperCase() : event.char;
-          if (f.accept && !f.accept.test(ch)) {
-            this.write(new Videotex().bell());
-            continue;
-          }
-          if (value.length >= f.length) {
+          if ((f.accept && !f.accept.test(ch)) || value.length >= f.length) {
             this.write(new Videotex().bell());
             continue;
           }
           value += ch;
           if (f.secret) ch = '*';
           const echo = at(value.length - 1).text(ch);
-          if (value.length >= f.length) echo.moveTo(f.row, f.col + f.length - 1).cursor(true);
-          this.write(echo);
+          // Keep the cursor inside the field: on the last cell once full, and
+          // at the start of the next row when the echo ended a row.
+          if (value.length >= f.length) echo.moveTo(...place(f.length - 1));
+          else if (value.length % width === 0) echo.moveTo(...place(value.length));
+          this.write(echo.cursor(true));
         } else if (event.type === 'key') {
           if (event.key === 'CORRECTION' || event.key === 'LEFT') {
             if (!value.length) continue;
             value = value.slice(0, -1);
-            this.write(at(value.length).text(f.placeholder || ' ').moveTo(f.row, f.col + value.length).cursor(true));
+            this.write(at(value.length).text(f.placeholder || ' ').moveTo(...place(value.length)).cursor(true));
           } else if (event.key === 'ANNULATION') {
             value = '';
             this.write(this.drawField(f, value).moveTo(f.row, f.col).cursor(true));
@@ -275,10 +278,16 @@ export class Session extends EventTarget {
 
   /** Writer that draws a field with its current value and placeholders. */
   drawField(f, value) {
+    const width = f.width || f.length;
     const shown = f.secret ? '*'.repeat(value.length) : value;
-    const v = new Videotex().moveTo(f.row, f.col).color(f.color).text(shown);
-    const rest = f.length - value.length;
-    if (rest > 0) v.fill(f.placeholder || ' ', rest);
+    const v = new Videotex();
+    for (let i = 0; i < f.length; i += width) {
+      const segment = [...shown].slice(i, i + width).join('');
+      const cells = Math.min(width, f.length - i);
+      v.moveTo(f.row + i / width, f.col).color(f.color).text(segment);
+      const rest = cells - [...segment].length;
+      if (rest > 0) v.fill(f.placeholder || ' ', rest);
+    }
     return v;
   }
 

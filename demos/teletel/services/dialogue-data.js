@@ -5,22 +5,22 @@
  * In lines, {P} stands for the pseudonym of the person talking to them.
  */
 
-/** Rooms: key, title, blurb, topic of the day. */
+/** Rooms: key, names, blurb, topic of the day. */
 export const ROOMS = [
   {
-    key: 'general', name: 'Salon général', short: 'GENERAL',
+    key: 'general', name: 'Salon général', where: 'le Salon général', short: 'GENERAL',
     blurb: 'On parle de tout, sans se prendre la tête', topic: 'Présentez-vous !',
   },
   {
-    key: 'cinema', name: 'Cinéma', short: 'CINEMA',
+    key: 'cinema', name: 'Cinéma', where: 'le salon Cinéma', short: 'CINEMA',
     blurb: 'Les films de 1990 et les cassettes VHS', topic: 'Cyrano ou Retour vers le futur 3 ?',
   },
   {
-    key: 'info', name: 'Informatique', short: 'INFORMATIQUE',
+    key: 'info', name: 'Informatique', where: 'le salon Informatique', short: 'INFORMATIQUE',
     blurb: 'Micros, jeux vidéo et bidouille en BASIC', topic: 'Atari ST contre Amiga',
   },
   {
-    key: 'voyages', name: 'Voyages', short: 'VOYAGES',
+    key: 'voyages', name: 'Voyages', where: 'le salon Voyages', short: 'VOYAGES',
     blurb: 'Idées de vacances, trains et cartes postales', topic: 'Où partez-vous cet été ?',
   },
 ];
@@ -94,8 +94,8 @@ export const REGULARS = [
 /** Things regulars say out of the blue, by room. [pseudo, text] */
 export const CHATTER = {
   general: [
-    ['BRETON29', 'Quel temps chez vous ? Ici il pleut des cordes'],
-    ['SOLEIL13', 'Grand soleil sur Marseille, 24 degrés !'],
+    ['BRETON29', 'Crêpes au beurre salé ce soir, qui vient ?'],
+    ['SOLEIL13', 'Partie de pétanque ce soir sur le Vieux-Port'],
     ['MAMIE_ROSE', "Mon petit-fils m'a branché le Minitel, c'est formidable"],
     ['TONTON_JO', 'Attention à la facture : le 3615, ça chiffre vite ;-)'],
     ['ZAZOU', 'Qui a écouté le Top 50 hier soir ?'],
@@ -242,7 +242,7 @@ export const REPLIES = [
     ['Tu programmes en BASIC, {P} ?', 'Amiga pour la vie !', "Moi j'ai un CPC 6128, et toi {P} ?"],
   ],
   [
-    /temps|meteo|pluie|pleu|soleil|neige|chaud|froid/,
+    /temps|meteo|pluie|pleu|soleil|neige|chaud|froid|(^|\W)beau(\W|$)/,
     ['Ici il fait beau, et chez toi {P} ?', "Il pleut à Brest, comme d'habitude", 'Prends ton parapluie {P} !'],
   ],
   [

@@ -133,6 +133,38 @@ export class Videotex {
     return this.raw(C.BEL);
   }
 
+  /** CSI sequence: ESC [ params final. */
+  csi(params, final) {
+    return this.raw(C.ESC, C.CSI, String(params ?? ''), final);
+  }
+
+  /** CSI n L / CSI n M: insert or delete rows at the cursor (the rows below move). */
+  insertLines(n = 1) { return this.csi(n, 'L'); }
+  deleteLines(n = 1) { return this.csi(n, 'M'); }
+
+  /** CSI n @ / CSI n P: insert or delete characters at the cursor. */
+  insertChars(n = 1) { return this.csi(n, '@'); }
+  deleteChars(n = 1) { return this.csi(n, 'P'); }
+
+  /** Relative cursor moves without wrapping (CSI A/B/C/D). */
+  cursorBy(rows = 0, cols = 0) {
+    if (rows < 0) this.csi(-rows, 'A');
+    if (rows > 0) this.csi(rows, 'B');
+    if (cols > 0) this.csi(cols, 'C');
+    if (cols < 0) this.csi(-cols, 'D');
+    return this;
+  }
+
+  /** ESC 6/1: ask the terminal where its cursor is (it answers US row col). */
+  requestCursor() {
+    return this.raw(C.ESC, 0x61);
+  }
+
+  /** PRO1 ENQROM: ask the terminal for its identification. */
+  requestIdentity() {
+    return this.raw(C.ESC, C.PRO1, C.ENQROM);
+  }
+
   /** PRO2 START/STOP ROULEAU: scroll instead of wrapping at the bottom. */
   scroll(on = true) {
     return this.raw(C.ESC, C.PRO2, on ? C.PRO_START : C.PRO_STOP, C.MODE_ROULEAU);

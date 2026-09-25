@@ -452,23 +452,23 @@ function helpPage() {
   p.print(7, 15, 'Minitel 1 : chiffres', { color: 'green' });
   p.print(9, 3, 'Pause', { color: 'yellow' });
   cap(p, 9, 15, 'ENVOI');
-  p.print(10, 3, 'Abandon', { color: 'yellow' });
-  cap(p, 10, 15, 'SOMMAIRE');
-  p.print(11, 3, 'Réafficher', { color: 'yellow' });
-  cap(p, 11, 15, 'REPETITION');
+  p.print(11, 3, 'Abandon', { color: 'yellow' });
+  cap(p, 11, 15, 'SOMMAIRE');
+  p.print(13, 3, 'Réafficher', { color: 'yellow' });
+  cap(p, 13, 15, 'REPETITION');
 
-  p.hline(13, { col: 3, width: 36, color: 'blue' });
-  p.moveTo(14, 3).color('red').mosaic(APPLE);
-  p.print(14, 5, 'Pomme rouge', { color: 'red' });
-  p.print(14, 19, '10 pts x niveau', { color: 'white' });
-  p.print(15, 19, 'et 6 anneaux de plus', { color: 'cyan' });
-  p.moveTo(16, 3).color('yellow').flash(true).mosaic(APPLE);
-  p.print(16, 5, "Pomme d'or", { color: 'yellow' });
-  p.print(16, 19, '50 pts x niveau', { color: 'white' });
-  p.print(17, 19, 'fugace : faites vite', { color: 'cyan' });
-  p.print(18, 5, 'Niveau', { color: 'green' });
-  p.print(18, 19, 'toutes les 4 pommes', { color: 'white' });
-  p.hline(19, { col: 3, width: 36, color: 'blue' });
+  p.hline(14, { col: 3, width: 36, color: 'blue', style: 'bottom' });
+  p.moveTo(15, 3).color('red').mosaic(APPLE);
+  p.print(15, 5, 'Pomme rouge', { color: 'red' });
+  p.print(15, 19, '10 pts x niveau', { color: 'white' });
+  p.print(16, 19, 'et 6 anneaux de plus', { color: 'cyan' });
+  p.moveTo(17, 3).color('yellow').flash(true).mosaic(APPLE);
+  p.print(17, 5, "Pomme d'or", { color: 'yellow' });
+  p.print(17, 19, '50 pts x niveau', { color: 'white' });
+  p.print(18, 19, 'fugace : faites vite', { color: 'cyan' });
+  p.print(19, 5, 'Niveau', { color: 'green' });
+  p.print(19, 19, 'toutes les 4 pommes', { color: 'white' });
+  p.hline(20, { col: 3, width: 36, color: 'blue', style: 'top' });
 
   p.paragraph(21, 3, "Le saviez-vous ? Chaque pas du serpent ne coûte qu'une dizaine de caractères.", { width: 36, color: 'green' });
   p.hints(24, [['ENVOI', 'jouer'], ['SOMMAIRE', 'retour']], { col: 3 });
@@ -553,7 +553,7 @@ async function title(session) {
   session.write(page.raw(0x1b, 0x61));
   const crawler = new Crawler();
   let started = false;
-  let next = clock() + (page.length * 1000) / 120 + 1500; // if the terminal never answers
+  let next = clock() + (page.length * 1000) / 60 + 2000; // if the terminal never answers
   const start = () => {
     started = true;
     session.write(crawler.drawAll());

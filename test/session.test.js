@@ -149,3 +149,30 @@ test('double-width text reads once in the text mirror', () => {
   new Decoder(screen).write(new Page().clear().print(5, 2, 'DEMAIN', { size: 'wide' }).bytes());
   assert.equal(screen.rowText(5).trim(), 'DEMAIN');
 });
+
+test('a multi-row field wraps its echo and its corrections', async () => {
+  const t = terminal();
+  const session = new Session(t.server);
+  const pending = session.input({ row: 20, col: 3, length: 12, width: 6 });
+  await t.tick();
+  await t.type('BONJOUR');
+  assert.equal(t.screen.rowText(20).slice(2, 8), 'BONJOU');
+  assert.equal(t.screen.rowText(21).slice(2, 8), 'R.....');
+  await t.key('CORRECTION');
+  await t.key('CORRECTION');
+  await t.key('ENVOI');
+  assert.equal((await pending).value, 'BONJO');
+  assert.equal(t.screen.rowText(20).slice(2, 8), 'BONJO.');
+});
+
+test('double-height text on a background opens the zone on both rows', () => {
+  const screen = new Screen();
+  new Decoder(screen).write(new Page().clear().print(6, 5, 'HAUT', { bg: 'blue', size: 'tall' }).bytes());
+  assert.equal(screen.resolveRow(5)[5].bg, 4, 'upper half');
+  assert.equal(screen.resolveRow(6)[5].bg, 4, 'lower half');
+});
+
+test('writer CSI helpers', () => {
+  const bytes = [...new Page().insertLines(2).deleteChars(1).cursorBy(-1, 3).requestCursor().bytes()];
+  assert.deepEqual(bytes, [0x1b, 0x5b, 0x32, 0x4c, 0x1b, 0x5b, 0x31, 0x50, 0x1b, 0x5b, 0x31, 0x41, 0x1b, 0x5b, 0x33, 0x43, 0x1b, 0x61]);
+});

@@ -11,7 +11,7 @@
  * open at the bottom of the screen, and nothing above ever moves. A new
  * message costs its own text plus about ten bytes.
  */
-import { Page, wrap } from '../../../src/js/service/page.js';
+import { Page } from '../../../src/js/service/page.js';
 import { Videotex } from '../../../src/js/videotex/writer.js';
 import { ROOMS, REGULARS, CHATTER, SCENES, REPLIES, SMALL_TALK, CALLED } from './dialogue-data.js';
 
@@ -344,7 +344,8 @@ function wrapFirst(text, first, rest) {
  */
 function renderMessage({ kind, pseudo, text, color = 'cyan' }) {
   if (kind === 'info' || kind === 'event') {
-    return wrap(`${kind === 'info' ? '>>' : '*'} ${text}`, 38).map((line) => (v, row) => v.moveTo(row, 2).color('green').text(line));
+    const lines = wrapFirst(`${kind === 'info' ? '>>' : '*'} ${text}`, 38, 38);
+    return lines.map((line) => (v, row) => v.moveTo(row, 2).color('green').text(line));
   }
   // The pseudo is a badge in inverse video, in the person's colour.
   const ink = kind === 'me' ? 'yellow' : 'white';
@@ -430,31 +431,42 @@ class Channel {
     if (first) this.say(first, this.choose(GREETINGS));
     if (second) {
       this.later(between(2500, 4500), () => {
-        if (!this.spoke) this.say(second, this.choose(['Salut {P} !', 'Bienvenue {P} :-)', 'Hello {P}, installe-toi !']));
+        if (!this.spoke) this.say(second, this.choose(['Salut {P} !', 'Bienvenue {P} :-)', 'Hello {P} !']));
       });
     }
   }
 
   ambient() {
     const roll = Math.random();
-    if (roll < 0.12 && (this.away.length || this.present.length > 3)) {
-      this.comeAndGo();
-    } else if (roll < 0.35 && this.scenes.length) {
-      const scene = this.scenes.shift();
-      this.scenes.push(scene);
-      let delay = 0;
-      scene.forEach(([pseudo, text]) => {
-        this.later(delay, () => this.say(regular(pseudo), text, true));
-        delay += between(3200, 5200);
+    if (roll < 0.12 && (this.away.length || this.present.length > 3)) this.comeAndGo();
+    else if (roll >= 0.35 || !this.playScene()) this.chat();
+  }
+
+  /** A line of small talk from someone present. */
+  chat() {
+    if (!this.chatter.length) this.chatter = shuffle(CHATTER[this.room.key] || []);
+    const i = this.chatter.findIndex(([pseudo]) => this.present.includes(regular(pseudo)));
+    if (i < 0) return;
+    const [[pseudo, text]] = this.chatter.splice(i, 1);
+    this.say(regular(pseudo), text, true);
+  }
+
+  /** A little scripted exchange; it needs its whole cast and stops if someone leaves. */
+  playScene() {
+    const i = this.scenes.findIndex((scene) => scene.every(([pseudo]) => this.present.includes(regular(pseudo))));
+    if (i < 0) return false;
+    const [scene] = this.scenes.splice(i, 1);
+    this.scenes.push(scene);
+    let delay = 0;
+    let broken = false;
+    scene.forEach(([pseudo, text]) => {
+      this.later(delay, () => {
+        broken = broken || !this.present.includes(regular(pseudo));
+        if (!broken) this.say(regular(pseudo), text);
       });
-    } else {
-      if (!this.chatter.length) this.chatter = shuffle(CHATTER[this.room.key] || []);
-      const i = this.chatter.findIndex(([pseudo]) => this.present.includes(regular(pseudo)));
-      if (i >= 0) {
-        const [[pseudo, text]] = this.chatter.splice(i, 1);
-        this.say(regular(pseudo), text, true);
-      }
-    }
+      delay += between(3200, 5200);
+    });
+    return true;
   }
 
   /** Someone arrives or leaves. */
@@ -690,7 +702,8 @@ async function browse(session, channel) {
     session.write(profilePage(bot, channel.colorOf(bot)));
     const next = await session.waitKey(['ENVOI', 'RETOUR', 'SOMMAIRE', 'SUITE']);
     if (next === 'ENVOI') {
-      channel.hear(`Bonjour ${bot.pseudo} !`);
+      if (channel.present.includes(bot)) channel.hear(`Bonjour ${bot.pseudo} !`);
+      else channel.post({ kind: 'event', text: `${bot.pseudo} vient de quitter le salon` });
       return;
     }
     if (next === 'SOMMAIRE') return;
@@ -700,7 +713,7 @@ async function browse(session, channel) {
 /** Inside a room until SOMMAIRE. */
 async function chat(session, room, pseudo, lurkers) {
   const channel = new Channel(session, room, pseudo, lurkers);
-  channel.post({ kind: 'info', text: `Vous entrez dans le salon ${room.name}. Sujet du jour : ${room.topic}` });
+  channel.post({ kind: 'info', text: `Vous entrez dans ${room.where}. Sujet du jour : ${room.topic}` });
   channel.show();
   channel.start();
   try {
