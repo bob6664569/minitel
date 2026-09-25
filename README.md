@@ -123,4 +123,8 @@ The font is drawn as ASCII art in `src/js/font/glyphs.js`; `tools/build-font.mjs
 
 A tribute to the Minitel (1982–2012). The font, components and emulator are original work; the protocol follows the *Spécifications Techniques d'Utilisation du Minitel* (STUM1B). No ROM, archive page or trademark artwork is included.
 
+## License
+
+[MIT](LICENSE), fonts included.
+
 [![Faire un don en Bitcoin](https://fr.cryptobadges.io/badge/big/1EW7pcZb384G8z7uBp29gdYBDg2Z4wAbAJ?showBalance=true)](https://fr.cryptobadges.io/donate/1EW7pcZb384G8z7uBp29gdYBDg2Z4wAbAJ)

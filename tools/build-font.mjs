@@ -24,6 +24,7 @@ const OUT = join(ROOT, 'src/fonts');
 const UNITS_PER_EM = 1000;
 const ROW_UNITS = UNITS_PER_EM / CELL_HEIGHT; // 100 units per pixel row
 const VERSION = '1.000';
+const COPYRIGHT = 'Copyright (c) 2026 Johan';
 // Fixed timestamp keeps builds reproducible (seconds since 1904-01-01).
 const TIMESTAMP = Math.floor(Date.UTC(2026, 8, 25) / 1000) + 2082844800;
 
@@ -178,9 +179,11 @@ function buildCmap(codepoints) {
 
 function buildName(family, style, psName) {
   const records = [
+    [0, COPYRIGHT],
     [1, family], [2, style], [3, `${psName};${VERSION}`], [4, style === 'Regular' ? family : `${family} ${style}`],
     [5, `Version ${VERSION}`], [6, psName],
     [10, 'Videotex 8x10 bitmap font from the minitel design system.'],
+    [13, 'MIT License'], [14, 'https://opensource.org/licenses/MIT'],
   ];
   const strings = records.map(([id, text]) => {
     const buf = Buffer.alloc(text.length * 2);

@@ -2,6 +2,7 @@
   "name": "minitel-ds",
   "version": "1.0.0",
   "description": "A Minitel / Videotex design system: 8x10 web fonts, CSS components, a faithful Videotex terminal emulator with a WebGL CRT, and a Télétel service framework.",
+  "license": "MIT",
   "type": "module",
   "main": "src/js/index.js",
   "module": "src/js/index.js",
