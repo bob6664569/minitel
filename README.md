@@ -87,7 +87,7 @@ await device.dial('3615', { code: 'HELLO' });
 
 | 3615 TRAINS | 3615 BOURSE | 3611 |
 | --- | --- | --- |
-| ![3615 TRAINS: the live departures board of the Paris stations](assets/screenshots/teletel-trains.png) | ![3615 BOURSE: live quotes, prices that just moved in inverse video](assets/screenshots/teletel-bourse.png) | ![3611: the electronic directory listing the Martins of Lyon](assets/screenshots/teletel-annuaire.png) |
+| ![3615 TRAINS: the live departures board of the Paris stations](assets/screenshots/teletel-trains.png) | ![3615 BOURSE: live quotes, prices that just moved in inverse video](assets/screenshots/teletel-bourse.png) | ![3611: the search page of the electronic directory, looking for the tourist office of Dijon](assets/screenshots/teletel-annuaire.png) |
 | **3615 SERPENT** | **3615 DIALOGUE** | **3615 CODE** |
 | ![3615 SERPENT: the title screen with a mosaic snake and apple](assets/screenshots/teletel-serpent.png) | ![3615 DIALOGUE: a chat room with coloured pseudonyms](assets/screenshots/teletel-dialogue.png) | ![3615 CODE: the test card](assets/screenshots/teletel-code.png) |
 
@@ -95,7 +95,7 @@ await device.dial('3615', { code: 'HELLO' });
 | --- | --- |
 | 3615 METEO | Weather with a mosaic map of France |
 | 3615 TRAINS | Timetables over 75 stations, route diagrams, bookings and a live departures board |
-| 3611 | The electronic directory: people and trades by town, free for three minutes |
+| 3611 | The electronic directory and its famous search page: people, trades and offices by town or department, free for three minutes |
 | 3615 BOURSE | Live quotes redrawn character by character, charts, orders and a portfolio |
 | 3615 SERPENT | Snake at sextant resolution |
 | 3615 DIALOGUE | Chat rooms of 1990, with regulars who answer back |
