@@ -125,6 +125,8 @@ export class MinitelDeviceElement extends HTMLElement {
 
   togglePower() {
     if (!this.minitel) return undefined;
+    this.audio.unlock();
+    this.audio.click();
     return this.minitel.state === 'off' ? this.powerOn() : this.powerOff();
   }
 
