@@ -363,17 +363,23 @@ class Game {
     return v.bell();
   }
 
-  /** Every cell of the playfield (REPETITION, first display). */
-  drawAll(v) {
-    this.painter.forget();
-    for (let cy = 0; cy < ROWS; cy++) {
+  /** Snake and apples on some rows of the playfield (all of them by default). */
+  drawRows(v, from = 0, to = ROWS - 1) {
+    for (let cy = from; cy <= to; cy++) {
       for (let cx = 0; cx < COLS; cx++) {
         const bits = this.bitsAt(cx, cy);
         if (bits) this.painter.cell(v, TOP + cy, LEFT + cx, bits);
       }
     }
-    if (this.food) this.drawFood(v, this.food, 'red');
-    if (this.gold) this.drawFood(v, this.gold, 'yellow', true);
+    if (this.food && this.food.cy >= from && this.food.cy <= to) this.drawFood(v, this.food, 'red');
+    if (this.gold && this.gold.cy >= from && this.gold.cy <= to) this.drawFood(v, this.gold, 'yellow', true);
+    return v;
+  }
+
+  /** Every cell of the playfield (REPETITION, first display). */
+  drawAll(v) {
+    this.painter.forget();
+    this.drawRows(v);
     this.drawCounters(v);
     return v;
   }
@@ -574,8 +580,8 @@ async function title(session) {
 async function play(session) {
   const game = new Game();
   session.flush();
-  session.write(gamePage(game).append(new Videotex()
-    .moveTo(20, 8).color('yellow').text('Une flèche ou 8 4 6 2 : partez !')));
+  const hint = new Videotex().moveTo(20, 8).color('yellow').text('Une flèche ou 8 4 6 2 : partez !');
+  session.write(gamePage(game).append(hint));
 
   // Wait for the first direction (or ENVOI to go straight on).
   for (;;) {
@@ -587,9 +593,11 @@ async function play(session) {
     }
     if (event.type === 'key' && event.key === 'ENVOI') break;
     if (event.type === 'key' && event.key === 'SOMMAIRE') return 'menu';
-    if (event.type === 'key' && event.key === 'REPETITION') session.write(gamePage(game));
+    if (event.type === 'key' && event.key === 'REPETITION') session.write(gamePage(game).append(hint));
   }
-  session.write(new Videotex().moveTo(20, 8).text(' ').repeat(31));
+  // Wipe the hint, then put back whatever it covered.
+  game.painter.forget();
+  session.write(game.drawRows(new Videotex().moveTo(20, 8).text(' ').repeat(31), 20 - TOP, 20 - TOP));
   game.painter.forget();
 
   let next = clock();

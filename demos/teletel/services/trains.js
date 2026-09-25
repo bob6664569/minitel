@@ -320,7 +320,8 @@ function resultsPage({ from, to, date }, trains, start, { partial = false } = {}
       ['→', 'cyan'],
       [`${clock(t.arr)}${arrow}`, 'white'],
       [pad(duration(t.minutes), 6, 'right'), 'cyan'],
-      [` ${TYPE_CODES[t.type]} ${t.number}`, t.color],
+      // Magenta is too close to the blue band on a monochrome screen.
+      [` ${TYPE_CODES[t.type]} ${t.number}`, bg && t.color === 'magenta' ? 'white' : t.color],
       [pad(`${t.price2} F`, 8, 'right'), 'white'],
     ], { bg: bg ?? 'black' });
     p.moveTo(row + 1, 1).bg(bg ?? 'black').text(' ').color(t.color).mosaic([...dayBar(t), 0]);
@@ -340,7 +341,7 @@ function resultsPage({ from, to, date }, trains, start, { partial = false } = {}
     });
   }
   const hints = [];
-  if (pageNo < pages) hints.push(['SUITE', 'trains suivants']);
+  if (pageNo < pages) hints.push(['SUITE', 'suivants']);
   hints.push(['RETOUR', pageNo > 1 ? 'précédents' : 'recherche']);
   p.moveTo(22, 1).clearEOL();
   p.hints(22, hints);
@@ -358,30 +359,32 @@ async function results(session, state, query) {
   }
   let start = trains.findIndex((t) => t.dep >= query.hour * 60);
   if (start < 0) start = Math.max(0, trains.length - PER_PAGE);
-  let partial = false;
+  // 'full' page, 'partial' (the table only, when paginating) or nothing.
+  let draw = 'full';
   for (;;) {
-    session.write(resultsPage(query, trains, start, { partial }));
-    partial = false;
-    const { key, value } = await session.input({ row: 24, col: 21, length: 1, color: 'cyan', accept: /[0-9]/ });
+    if (draw) session.write(resultsPage(query, trains, start, { partial: draw === 'partial' }));
+    draw = null;
+    const { key, value } = await session.input({ row: 24, col: 21, length: 1, color: 'cyan', accept: /[1-5]/ });
+    const n = Number(value);
+    const train = n ? trains[start + n - 1] : null;
     if (key === 'SOMMAIRE') throw HOME;
     if (key === 'GUIDE') {
       await help(session);
-    } else if (key === 'SUITE') {
-      if (start + PER_PAGE < trains.length) {
-        start += PER_PAGE;
-        partial = true;
-      } else {
-        session.write(new Videotex().bell());
-      }
+      draw = 'full';
+    } else if (key === 'REPETITION') {
+      draw = 'full';
+    } else if (key === 'SUITE' && start + PER_PAGE < trains.length) {
+      start += PER_PAGE;
+      draw = 'partial';
     } else if (key === 'RETOUR') {
       if (start === 0) return;
       start = Math.max(0, start - PER_PAGE);
-      partial = true;
-    } else if (key === 'ENVOI') {
-      const n = Number(value);
-      const train = n >= 1 && n <= PER_PAGE ? trains[start + n - 1] : null;
-      if (train) await detail(session, state, query, train);
-      else session.write(new Videotex().bell());
+      draw = 'partial';
+    } else if (key === 'ENVOI' && train) {
+      await detail(session, state, query, train);
+      draw = 'full';
+    } else {
+      session.write(new Videotex().bell());
     }
   }
 }
@@ -435,9 +438,9 @@ function detailPage(query, train) {
     p.label(20, col, text, { bg, color });
     col += text.length + 3;
   };
-  if (train.bar) badge('BAR', 'green', 'black');
+  if (train.bar) badge('VOITURE-BAR', 'green', 'black');
   if (train.couchettes) badge('COUCHETTES', 'magenta', 'white');
-  if (train.reservation) badge('RESA OBLIGATOIRE', 'red', 'white');
+  if (train.reservation) badge(train.couchettes ? 'RESA' : 'RESA OBLIGATOIRE', 'red', 'white');
   if (!train.bar && !train.reservation) badge('SANS RESERVATION', 'cyan', 'black');
 
   p.hints(22, [['RETOUR', 'liste'], ['SOMMAIRE', 'accueil']]);
@@ -449,15 +452,20 @@ function detailPage(query, train) {
 }
 
 async function detail(session, state, query, train) {
+  let draw = true;
   for (;;) {
     const page = detailPage(query, train);
-    session.write(page);
+    if (draw) session.write(page);
+    draw = true;
     const { key, value } = await session.input({ ...page.field, length: 1, color: 'cyan', accept: /[12]/ });
     if (key === 'SOMMAIRE') throw HOME;
     if (key === 'RETOUR') return;
     if (key === 'GUIDE') await help(session);
     else if (key === 'ENVOI' && value) await book(session, state, query, train, value);
-    else if (key === 'ENVOI') session.write(new Videotex().bell());
+    else if (key !== 'REPETITION') {
+      session.write(new Videotex().bell());
+      draw = false;
+    }
   }
 }
 
@@ -605,6 +613,7 @@ async function ticket(session, booking, { fresh = false } = {}) {
 /* ---------------------------------------------------------------------- */
 
 async function bookings(session, state) {
+  let draw = true;
   for (;;) {
     const p = new Page().clear().cursor(false);
     header(p, 'MES BILLETS');
@@ -626,12 +635,17 @@ async function bookings(session, state) {
     });
     p.hints(22, [['SOMMAIRE', 'accueil']]);
     p.prompt({ label: 'N° du billet', length: 1 });
-    session.write(p);
-    const { key, value } = await session.input({ row: 24, col: 15, length: 1, color: 'cyan', accept: /[0-9]/ });
+    if (draw) session.write(p);
+    draw = true;
+    const { key, value } = await session.input({ row: 24, col: 15, length: 1, color: 'cyan', accept: /[1-6]/ });
+    const b = list[Number(value) - 1];
     if (key === 'SOMMAIRE' || key === 'RETOUR') return;
     if (key === 'GUIDE') await help(session);
-    const b = list[Number(value) - 1];
-    if (key === 'ENVOI' && b) await ticket(session, b);
+    else if (key === 'ENVOI' && b) await ticket(session, b);
+    else if (key !== 'REPETITION') {
+      session.write(new Videotex().bell());
+      draw = false;
+    }
   }
 }
 
@@ -643,6 +657,7 @@ const BOARD_STATIONS = ['Paris', 'Lyon', 'Marseille', 'Bordeaux', 'Lille', 'Stra
 const BOARD_ROWS = 7;
 const BOARD_TOP = 7;
 const FLAPS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+const SHORT_NAMES = { 'CLERMONT-FERRAND': 'CLERMONT-FD', 'MANTES-LA-JOLIE': 'MANTES' };
 
 /** Upcoming departures of a station, one every 1 to 4 minutes after `from`. */
 function boardDepartures(station, from, count, seed) {
@@ -658,12 +673,13 @@ function boardDepartures(station, from, count, seed) {
     const t = trains[Math.floor(rand() * trains.length)];
     const names = [];
     for (const s of t.stops.slice(1, -1)) {
-      if (names.join(', ').length + s.station.name.length > 22) break;
+      if (`via ${[...names, s.station.name].join(', ')}`.length > 25) break;
       names.push(s.station.name);
     }
+    const name = to.name.toUpperCase();
     list.push({
       time,
-      to: to.name.toUpperCase(),
+      to: name.length > 13 ? SHORT_NAMES[name] || name.slice(0, 13) : name,
       train: `${TYPE_CODES[t.type]} ${t.number}`,
       voie: station === STATIONS[0] && t.type === 'TGV' ? 'ABCDEFGHIJKLMN'[Math.floor(rand() * 14)] : String(1 + Math.floor(rand() * 18)),
       delay: rand() < 0.15 ? 5 * (1 + Math.floor(rand() * 4)) : 0,
@@ -768,16 +784,21 @@ export default {
   description: 'Horaires et réservations',
   async run(session) {
     const state = session.data.trains || (session.data.trains = { bookings: [], visits: 0 });
+    let draw = true;
     for (;;) {
-      session.write(homePage(state));
-      const { key, value } = await session.input({ row: 24, col: 14, length: 1, color: 'cyan', accept: /[0-9]/ });
+      if (draw) session.write(homePage(state));
+      draw = true;
+      const { key, value } = await session.input({ row: 24, col: 14, length: 1, color: 'cyan', accept: /[1-3]/ });
       if (key === 'SOMMAIRE') return;
       try {
         if (key === 'GUIDE') await help(session);
         else if (key === 'ENVOI' && value === '1') await search(session, state);
         else if (key === 'ENVOI' && value === '2') await board(session);
         else if (key === 'ENVOI' && value === '3') await bookings(session, state);
-        else if (key === 'ENVOI') session.write(new Videotex().bell());
+        else if (key !== 'REPETITION') {
+          session.write(new Videotex().bell());
+          draw = false;
+        }
       } catch (error) {
         if (error !== HOME) throw error;
       }

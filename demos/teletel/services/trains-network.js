@@ -40,8 +40,8 @@ export function random(seed) {
  */
 const DATA = [
   ['Paris', 48.853, 2.349, 1, true],
-  ['Lille', 50.637, 3.063, 1, false, 'Nord', 'Lille Flandres'],
-  ['Arras', 50.291, 2.777, 2, false, 'Nord'],
+  ['Lille', 50.637, 3.063, 1, true, 'Nord', 'Lille Flandres'],
+  ['Arras', 50.291, 2.777, 2, true, 'Nord'],
   ['Amiens', 49.894, 2.296, 2, false, 'Nord'],
   ['Creil', 49.263, 2.475, 3, false, 'Nord'],
   ['Rouen', 49.443, 1.099, 1, false, 'St-Lazare', 'Rouen Rive-Droite'],
@@ -242,8 +242,8 @@ const LINES = [
   'Paris Troyes Belfort',
 ];
 
-/* High-speed lines (LGV Sud-Est and Atlantique): TGV only. */
-const LGV_LINES = ['Paris Mâcon Lyon', 'Paris Le_Mans', 'Paris Tours', 'Paris Dijon'];
+/* High-speed lines (LGV Sud-Est, Atlantique and Nord): TGV only. */
+const LGV_LINES = ['Paris Mâcon Lyon', 'Paris Le_Mans', 'Paris Tours', 'Paris Dijon', 'Paris Arras Lille'];
 
 const byName = new Map(STATIONS.map((s) => [s.name, s]));
 const graph = new Map(STATIONS.map((s) => [s, []]));
@@ -372,9 +372,12 @@ export function timetable(from, to, { dow = 2 } = {}) {
   if (km >= 480 && km <= 1150) add('NUIT', null);
 
   const outbound = distance(PARIS, to) >= distance(PARIS, from);
-  const trains = plan
+  let trains = plan
     .map((t, i) => build(from, to, t, t.type === 'TGV' ? fast : classic, km, i, rand, outbound, dow))
     .filter((t) => !(dow === 0 && t.dep < 8 * 60 && !t.night));
+  // Day trains that would arrive after midnight are not run.
+  const day = trains.filter((t) => t.night || t.arr <= 24.5 * 60);
+  if (day.length >= 3) trains = day;
   trains.sort((a, b) => a.dep - b.dep);
   return trains;
 }
