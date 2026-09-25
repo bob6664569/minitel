@@ -62,6 +62,16 @@ function iconGrid(pic, { bg = 0, cols } = {}) {
 }
 
 /**
+ * Pictogram on a sky-blue tile (6x6 sub-pixels): readable on the green land
+ * in colour and in grey levels alike. Rain turns cyan on the blue.
+ */
+function tile(type) {
+  const pic = icon(type);
+  const data = Int8Array.from(pic.data, (v) => (v < 0 ? SEA : v === SEA ? 6 : v));
+  return { width: pic.width, height: pic.height, data };
+}
+
+/**
  * Horizontal bar, 2/3 of a cell high so that stacked bars stay apart, with
  * half-cell resolution. The empty part is left black.
  */
@@ -77,9 +87,9 @@ function bar(p, row, col, width, ratio, color) {
 
 /** Pictogram with its label on the first row: the legend entry. */
 function legend(p, row, col, type) {
-  const g = iconGrid(icon(type), { cols: 14 });
+  const g = iconGrid(tile(type), { cols: 14 });
   gridText(g, 0, 3, ` ${WEATHER[type].label}`, { color: 'white', bg: 'black' });
-  return encodeGrid(p, g, { row, col, after: null });
+  return encodeGrid(p, g, { row, col });
 }
 
 function status(session, text) {
@@ -128,10 +138,10 @@ function homePage(day) {
   p.panel(17, 2, 20, 38, { bg: 'blue', shadow: 'cyan' });
   ['Paris', 'Lyon', 'Marseille'].forEach((name, i) => {
     const f = forecast(CITIES.find((c) => c.name === name), day);
-    const g = iconGrid(icon(f.type), { bg: SEA, cols: 12 });
+    const g = iconGrid(tile(f.type), { cols: 13 });
     gridText(g, 0, 3, ` ${name}`, { color: 'white', bg: 'blue' });
     gridText(g, 1, 3, ` ${deg(f.min)}/${deg(f.max)}`, { color: 'yellow', bg: 'blue' });
-    encodeGrid(p, g, { row: 18, col: 3 + i * 12, after: null });
+    encodeGrid(p, g, { row: 18, col: [3, 15, 26][i], after: SEA });
   });
   hint(p, 22, 3, 'GUIDE', 'aide et légende des cartes');
   p.prompt({ row: 24, label: 'Votre choix', length: 1 });
@@ -208,15 +218,7 @@ function mapGrid(day) {
   const shown = new Set();
   const badges = BADGES.map((b) => ({ ...b, f: list.find((x) => x.city.name === b.city) }));
   for (const { icon: [ix, iy], f } of badges) {
-    const pic = icon(f.type);
-    for (let y = 0; y < 6; y++) {
-      for (let x = 0; x < 6; x++) {
-        let v = pic.data[y * 6 + x];
-        // Rain is blue over land, cyan over the sea.
-        if (v === SEA && seaAt(ix + (x >> 1), iy + Math.floor(y / 3))) v = 6;
-        if (v >= 0) img.data[(iy * 3 + y) * img.width + ix * 2 + x] = v;
-      }
-    }
+    blit(img, tile(f.type), ix * 2, iy * 3);
     shown.add(f.type);
   }
   const grid = toGrid(img);
@@ -228,19 +230,21 @@ function mapGrid(day) {
 }
 
 /** Right-hand panel: date, legend of the pictograms on the map, keys. */
-function mapPanel(p, date, offset, types) {
-  for (let r = 5; r <= 24; r++) p.moveTo(r, PANEL).clearEOL();
+function mapPanel(p, date, offset, types, full) {
+  if (!full) for (const r of [5, 6, ...Array.from({ length: 13 }, (_, i) => 8 + i), 22]) p.moveTo(r, PANEL).clearEOL();
   const [dayName, ...rest] = longDate(date).split(' ');
   p.print(5, PANEL, cap(dayName), { color: 'yellow' });
   p.print(6, PANEL, rest.join(' '), { color: 'white' });
   const step = types.length > 4 ? 2 : 3;
   types.slice(0, 6).forEach((type, i) => legend(p, 8 + i * step, PANEL, type));
-  p.print(21, PANEL, 'Maxi en °C', { color: 'green' });
+  if (full) {
+    p.print(21, PANEL, 'Maxi en °C', { color: 'green' });
+    hint(p, 23, PANEL, 'GUIDE', 'aide', { padded: false });
+    hint(p, 24, PANEL, 'SOMMAIRE', 'menu', { padded: false });
+  }
   if (offset === 0) hint(p, 22, PANEL, 'SUITE', 'demain', { padded: false });
   else if (offset === MAP_DAYS - 1) hint(p, 22, PANEL, 'RETOUR', 'demain', { padded: false });
   else hint(p, 22, PANEL, 'SUITE', '', { padded: false }).text(' ').invert(true).color('white').text('RETOUR').invert(false);
-  hint(p, 23, PANEL, 'GUIDE', 'aide', { padded: false });
-  hint(p, 24, PANEL, 'SOMMAIRE', 'menu', { padded: false });
   return p;
 }
 
@@ -260,7 +264,7 @@ async function mapPage(session, day, offset) {
       p.print(3, 9, title.toUpperCase().padEnd(11), { color: 'white', bg: 'blue', size: 'double' });
     }
     encodeGrid(p, grid, { row: MAP.row, col: MAP.col, prev: shown });
-    mapPanel(p, day + offset, offset, types);
+    mapPanel(p, day + offset, offset, types, !shown);
     session.write(p);
     status(session, `Carte ${offset + 1}/${MAP_DAYS}`);
     shown = grid;
@@ -279,7 +283,7 @@ async function mapPage(session, day, offset) {
 /* Prévisions par ville                                                    */
 /* ---------------------------------------------------------------------- */
 
-const plain = (s) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+const plain = (s) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(/[^A-Z0-9]/g, '');
 
 /** City from a number (1..n) or the beginning of its name. */
 function findCity(value) {
@@ -415,6 +419,8 @@ function cityContent(p, day, city, offset) {
   p.print(12, 23, 'maxi', { color: 'yellow' });
   p.bigText(13, 22, deg(f.max), { color: 'yellow' });
 
+  p.hline(16, { col: 2, width: 38, color: 'blue', style: 'middle' });
+
   // Rain by part of the day
   p.print(17, 3, 'RISQUE DE PLUIE', { color: 'green' });
   SLOTS.forEach((label, i) => {
@@ -435,6 +441,7 @@ function cityContent(p, day, city, offset) {
   if (w.name) p.print(21, 28, cap(w.name), { color: 'yellow' });
 
   const sun = sunTimes(day + offset, city.lat, city.lon);
+  p.hline(22, { col: 2, width: 38, color: 'blue', style: 'middle' });
   p.print(23, 3, 'Soleil', { color: 'green' });
   p.moveTo(23, 10).color('white').text(`lever ${sun.rise}   coucher ${sun.set}`);
   return p;
@@ -477,20 +484,29 @@ async function cityPage(session, day, city) {
 const TEXT_TOP = 6;
 const TEXT_BOTTOM = 23;
 
-/** Flow the bulletin sections into screen pages: [[{ heading, lines }]]. */
+/**
+ * Flow the bulletin sections into screen pages: [[{ heading, lines }]].
+ * A section starts a new page when it does not fit, and is split (with a
+ * "suite" heading) only when it is longer than a whole page.
+ */
 function paginate(sections) {
+  const room = TEXT_BOTTOM - TEXT_TOP + 1;
   const pages = [[]];
   let used = 0;
   for (const [heading, text] of sections) {
-    const lines = text.split('\n').flatMap((para) => wrap(para, 38));
-    const need = lines.length + 1;
-    const room = TEXT_BOTTOM - TEXT_TOP + 1;
-    if (used && used + need > room) {
-      pages.push([]);
-      used = 0;
+    let lines = text.split('\n').flatMap((para) => wrap(para, 38));
+    let title = heading;
+    while (lines.length) {
+      if (used && used + lines.length + 1 > room) {
+        pages.push([]);
+        used = 0;
+      }
+      const part = lines.slice(0, room - used - 1);
+      pages[pages.length - 1].push({ heading: title, lines: part });
+      used += part.length + 2;
+      lines = lines.slice(part.length);
+      title = `${heading} (suite)`;
     }
-    pages[pages.length - 1].push({ heading, lines });
-    used += need + 1;
   }
   return pages;
 }
@@ -527,6 +543,15 @@ async function bulletinPages(session, day) {
 /* ---------------------------------------------------------------------- */
 
 async function guide(session) {
+  for (;;) {
+    session.write(guidePage());
+    status(session, 'Guide');
+    const key = await session.waitKey(['RETOUR', 'SOMMAIRE', 'ENVOI', 'GUIDE', 'SUITE', 'REPETITION']);
+    if (key !== 'REPETITION') return key === 'SOMMAIRE' ? 'home' : 'back';
+  }
+}
+
+function guidePage() {
   const p = new Page().clear().cursor(false);
   header(p, 'Guide', "Mode d'emploi");
   [
@@ -542,10 +567,7 @@ async function guide(session) {
   p.hline(12, { col: 21, width: 18, color: 'yellow', style: 'middle' });
   ORDER.forEach((type, i) => legend(p, 13 + Math.floor(i / 2) * 3, i % 2 ? 22 : 3, type));
   p.hints(24, [['RETOUR', 'page précédente'], ['SOMMAIRE', 'menu']]);
-  session.write(p);
-  status(session, 'Guide');
-  const key = await session.waitKey(['RETOUR', 'SOMMAIRE', 'ENVOI', 'GUIDE', 'SUITE']);
-  return key === 'SOMMAIRE' ? 'home' : 'back';
+  return p;
 }
 
 /* ---------------------------------------------------------------------- */

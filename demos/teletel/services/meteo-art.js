@@ -354,16 +354,6 @@ export function blit(dst, src, x, y) {
   return dst;
 }
 
-/** Fill a sub-pixel rectangle. */
-export function rect(dst, x, y, w, h, color) {
-  for (let j = y; j < y + h; j++) {
-    for (let i = x; i < x + w; i++) {
-      if (i >= 0 && j >= 0 && i < dst.width && j < dst.height) dst.data[j * dst.width + i] = color;
-    }
-  }
-  return dst;
-}
-
 /**
  * Cut an index image into a cell grid (see encodeGrid). `background` fills
  * transparent sub-pixels.
@@ -467,7 +457,9 @@ export function encodeGrid(v, grid, { row = 1, col = 1, prev, after = 0 } = {}) 
       // Mosaic: choose the orientation (bits or inverted bits).
       const next = line[x + 1];
       let wantBg = next && next.ch !== undefined && next.ch !== ' ' ? next.bg : undefined;
-      if (x === cols - 1 && col + x < 40 && after !== null) wantBg = after;
+      // Last cell before untouched cells: leave the `after` zone behind it.
+      const edge = after !== null && (x === cols - 1 ? col + x < 40 : next === null);
+      if (edge) wantBg = after;
       let { bits, fg: cf, bg: cb } = cell;
       if (bits === 0) cf = cb;
       if (bits === 63) cb = cf;
@@ -494,8 +486,8 @@ export function encodeGrid(v, grid, { row = 1, col = 1, prev, after = 0 } = {}) 
         lastByte = v.out[v.out.length - 1];
         lastKey = key;
       }
-      // Row end: close the zone with a mosaic space when the cell could not.
-      if (x === cols - 1 && after !== null && cb !== after && col + x < 40) {
+      // Close the zone with a mosaic space when the cell could not.
+      if (edge && cb !== after) {
         flush();
         v.bg(after).mosaic(0);
         bg = after;

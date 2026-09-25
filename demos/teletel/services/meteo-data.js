@@ -33,12 +33,6 @@ export function longDate(day) {
   return `${DAYS[d.getUTCDay()]} ${d.getUTCDate() === 1 ? '1er' : d.getUTCDate()} ${MONTHS[d.getUTCMonth()]}`;
 }
 
-/** "MAR 25/09" */
-export function shortDate(day) {
-  const d = dayDate(day);
-  return `${DAYS[d.getUTCDay()].slice(0, 3).toUpperCase()} ${String(d.getUTCDate()).padStart(2, '0')}/${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
-}
-
 export function weekday(day) {
   return DAYS[dayDate(day).getUTCDay()];
 }
@@ -110,21 +104,21 @@ export const CITIES = [
   { name: 'Biarritz', lat: 43.48, lon: -1.56, normals: [5, 12, 16, 24], region: 'aquitaine', coast: 0.7 },
 ];
 
-/** Regions of the late 80s bulletin, in reading order (north-west first). */
+/** Areas named in the bulletin, TV-forecast style, in reading order (north-west first). */
 export const REGIONS = {
   bretagne: 'la Bretagne',
   normandie: 'la Normandie',
   nord: 'le Nord',
   idf: "l'Ile-de-France",
   loire: 'les Pays de la Loire',
-  est: "l'Alsace et la Lorraine",
+  est: 'le Nord-Est',
   bourgogne: 'la Bourgogne',
   massif: 'le Massif central',
-  rhone: 'la région Rhône-Alpes',
+  rhone: 'la région lyonnaise',
   aquitaine: "l'Aquitaine",
-  midi: 'Midi-Pyrénées',
-  languedoc: 'le Languedoc-Roussillon',
-  provence: "la Provence et la Côte d'Azur",
+  midi: 'le Toulousain',
+  languedoc: 'le Languedoc',
+  provence: 'la Provence',
   corse: 'la Corse',
 };
 
@@ -171,7 +165,7 @@ const smoothstep = (a, b, x) => {
   return t * t * (3 - 2 * t);
 };
 
-/** 16 compass points used for the wind. */
+/** Eight compass points, clockwise from the north. */
 const COMPASS = ['nord', 'nord-est', 'est', 'sud-est', 'sud', 'sud-ouest', 'ouest', 'nord-ouest'];
 
 /**
@@ -243,8 +237,8 @@ export function forecast(city, day) {
       break;
     }
     case 'coldwave': {
-      const east = smoothstep(-1, 7, city.lon);
-      anomaly -= 5 + east * 3;
+      const east = smoothstep(-1, 7, city.lon) * (city.south ? 0.4 : 1);
+      anomaly -= (4 + east * 3) * (city.south ? 0.6 : 1);
       cloud = 0.15 + east * 0.5 * r();
       rain = east > 0.5 && r() < 0.35 ? 0.4 + r() * 0.3 : 0;
       peak = 10 + Math.round(r() * 6);
@@ -291,7 +285,7 @@ export function forecast(city, day) {
     name = city.name === 'Marseille' ? 'mistral' : 'tramontane';
   } else if (city.autan && (dir === 3 || dir === 4)) {
     speed = 35 + r() * 20;
-    name = 'vent d\'autan';
+    name = "vent d'autan";
   } else if (city.bise && (dir === 0 || dir === 1) && speed > 12) {
     name = 'bise';
   }
@@ -377,18 +371,32 @@ const SITUATION = {
 };
 
 const SKY = {
-  storm: (w) => `Des orages parfois violents éclateront sur ${w}, accompagnés de fortes pluies et de grêle.`,
-  rain: (w) => `Temps pluvieux sur ${w}, avec des pluies parfois soutenues.`,
-  snow: (w) => `Il neigera sur ${w}, parfois jusqu'en plaine.`,
-  showers: (w) => `Ciel changeant sur ${w} : averses et éclaircies alterneront.`,
-  fog: (w) => `Brouillards matinaux sur ${w}, lents à se dissiper.`,
-  cloudy: (w) => `Le ciel restera gris et chargé sur ${w}.`,
-  partly: (w) => `Nuages et éclaircies se partageront le ciel sur ${w}.`,
-  sun: (w) => `Le soleil brillera généreusement sur ${w}.`,
+  storm: (w) => `Orages parfois violents sur ${w}, avec grêle et fortes pluies.`,
+  rain: (w) => `Temps pluvieux sur ${w}.`,
+  snow: (w) => `Neige sur ${w}, parfois jusqu'en plaine.`,
+  showers: (w) => `Averses et éclaircies sur ${w}.`,
+  fog: (w) => `Brouillards tenaces sur ${w}.`,
+  cloudy: (w) => `Ciel gris et chargé sur ${w}.`,
+  partly: (w) => `Nuages et éclaircies sur ${w}.`,
+  sun: (w) => `Grand soleil sur ${w}.`,
+};
+/** The most widespread weather, said of the rest of the country. */
+const ELSEWHERE = {
+  storm: 'le temps sera orageux.',
+  rain: 'la pluie sera au rendez-vous.',
+  snow: 'la neige tombera par moments.',
+  showers: 'averses et éclaircies alterneront.',
+  fog: 'brouillards et grisaille domineront.',
+  cloudy: 'le ciel restera souvent gris.',
+  partly: 'nuages et éclaircies se partageront le ciel.',
+  sun: 'le soleil brillera généreusement.',
 };
 const ORDER = ['storm', 'rain', 'snow', 'showers', 'fog', 'cloudy', 'partly', 'sun'];
 
-/** Sky sentences for a day: regions grouped by their dominant weather. */
+/**
+ * Sky sentences for a day: areas grouped by their dominant weather, the
+ * most severe first, at most three groups before "ailleurs".
+ */
 function skyText(list) {
   const byRegion = {};
   for (const f of list) {
@@ -398,19 +406,15 @@ function skyText(list) {
   const groups = {};
   for (const [region, type] of Object.entries(byRegion)) (groups[type] ||= []).push(region);
   const types = ORDER.filter((t) => groups[t]);
-  const sentences = [];
-  types.forEach((type, i) => {
-    const regions = Object.keys(REGIONS).filter((k) => groups[type].includes(k)).map((k) => REGIONS[k]);
-    const last = i === types.length - 1 && i > 0;
-    if (last || regions.length > 6) {
-      const s = SKY[type]('le reste du pays');
-      sentences.push(last ? `Ailleurs, ${s.charAt(0).toLowerCase()}${s.slice(1)}`.replace(' sur le reste du pays', '') : s.replace('le reste du pays', 'la majeure partie du pays'));
-    } else {
-      sentences.push(SKY[type](join(regions)));
-    }
-  });
+  const widest = types.reduce((a, t) => (groups[t].length > groups[a].length ? t : a), types[0]);
+  const named = types.filter((t) => t !== widest).slice(0, 3);
+  const sentences = named.map((t) => SKY[t](join(Object.keys(REGIONS).filter((k) => groups[t].includes(k)).map((k) => REGIONS[k]))));
+  sentences.push(named.length ? `Ailleurs, ${ELSEWHERE[widest]}` : `Sur l'ensemble du pays, ${ELSEWHERE[widest]}`);
   return sentences.join(' ');
 }
+
+/** "d'ouest", "de nord-est" */
+const from = (label) => (/^[aeiou]/.test(label) ? `d'${label}` : `de ${label}`);
 
 function temperatureText(list, day) {
   const mins = list.map((f) => f.min);
@@ -425,11 +429,11 @@ function windText(list) {
   const strong = list.filter((f) => f.wind.gust >= 60).sort((a, b) => b.wind.gust - a.wind.gust);
   if (named.length) {
     const f = named[0];
-    return `${cap(f.wind.name)} soufflant jusqu'à ${f.wind.gust} km/h en rafales${f.wind.name === 'mistral' ? ' en Provence' : f.wind.name === 'tramontane' ? ' en Languedoc' : ' dans le Toulousain'}.`;
+    return `${cap(f.wind.name)} soufflant jusqu'à ${f.wind.gust} km/h en rafales sur ${REGIONS[f.city.region]}.`;
   }
-  if (strong.length) return `Vent de ${strong[0].wind.label} assez fort, rafales à ${strong[0].wind.gust} km/h sur ${REGIONS[strong[0].city.region]}.`;
+  if (strong.length) return `Vent ${from(strong[0].wind.label)} assez fort, rafales à ${strong[0].wind.gust} km/h sur ${REGIONS[strong[0].city.region]}.`;
   const avg = list.reduce((a, f) => a + f.wind.speed, 0) / list.length;
-  return avg < 15 ? 'Vent faible sur l\'ensemble du pays.' : `Vent de ${list[0].wind.label} modéré.`;
+  return avg < 15 ? "Vent faible sur l'ensemble du pays." : `Vent ${from(list[0].wind.label)} modéré.`;
 }
 
 const TREND = {
@@ -456,7 +460,7 @@ function seaText(list) {
   return [line('Manche', lille), line('Atlantique', brest), line('Méditerranée', nice)];
 }
 
-function mountainText(day, list) {
+function mountainText(list) {
   const lyon = list.find((f) => f.city.name === 'Lyon');
   const toulouse = list.find((f) => f.city.name === 'Toulouse');
   const iso = (f) => Math.max(500, Math.round((f.max * 120 + 600) / 100) * 100);
@@ -486,7 +490,7 @@ export function bulletin(day) {
     [`DEMAIN ${weekday(day + 1).toUpperCase()}`, `${skyText(tomorrow)} ${temperatureText(tomorrow, day + 1)}`],
     [`TENDANCE ${weekday(day + 2).toUpperCase()} ET ${weekday(day + 3).toUpperCase()}`, cap(TREND[ep1.type])],
     ['BULLETIN COTIER', seaText(today).join('\n')],
-    ['MONTAGNE', mountainText(day, today).join('\n')],
+    ['MONTAGNE', mountainText(today).join('\n')],
     ['EPHEMERIDE', `Paris : soleil levé à ${sun.rise}, couché à ${sun.set}. Durée du jour ${sun.length} (${delta >= 0 ? '+' : ''}${delta} min).`],
   ];
 }

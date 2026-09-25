@@ -174,11 +174,12 @@ export class Page extends Videotex {
   }
 
   /** Horizontal mosaic line: style top | middle | bottom | full. */
-  hline(row, { col = 1, width = WIDTH, color = 'white', bg, style = 'middle', separated = false } = {}) {
+  hline(row, { col = 1, width = WIDTH, color = 'white', bg, style = 'middle', separated = false, zone = 'black' } = {}) {
     this.moveTo(row, col).color(color);
     if (bg !== undefined) this.bg(bg);
     if (separated) this.separated(true);
-    return this.mosaic(new Array(width).fill(LINE[style]));
+    this.mosaic(new Array(width).fill(LINE[style]));
+    return bg === undefined ? this : this.closeZone(col + width, bg, zone);
   }
 
   /** Vertical mosaic line: style left | right | full. */
@@ -261,9 +262,13 @@ export class Page extends Videotex {
   }
 
   /** Hints line, e.g. hints(23, [['SUITE', 'page suivante'], ['SOMMAIRE', 'accueil']]). */
-  hints(row, pairs, { color = 'cyan', col = 2 } = {}) {
+  hints(row, pairs, { color = 'cyan', col = 2, width = WIDTH - col + 1 } = {}) {
     this.moveTo(row, col);
+    let used = 0;
     pairs.forEach(([key, text], i) => {
+      const size = (i ? 2 : 0) + textWidth(key) + 1 + textWidth(text);
+      if (used + size > width) return; // never wrap onto the next row
+      used += size;
       if (i) this.text('  ');
       this.color('white').invert(true).text(key).invert(false).color(color).text(` ${text}`);
     });
@@ -320,22 +325,33 @@ export class Page extends Videotex {
   }
 
   /** Horizontal progress bar with half-cell resolution. */
-  progress(row, col, width, ratio, { color = 'green', bg = 'black', track = 'blue' } = {}) {
+  progress(row, col, width, ratio, { color = 'green', bg = 'black', track = 'blue', zone = 'black' } = {}) {
     const halves = Math.round(Math.max(0, Math.min(1, ratio)) * width * 2);
     const cells = [];
     for (let i = 0; i < width; i++) {
       const filled = Math.max(0, Math.min(2, halves - i * 2));
       cells.push(filled === 2 ? LINE.full : filled === 1 ? LINE.left : 0);
     }
-    this.moveTo(row, col).color(color).bg(track === undefined ? bg : track);
-    return this.mosaic(cells);
+    const fill = track === undefined ? bg : track;
+    this.moveTo(row, col).color(color).bg(fill).mosaic(cells);
+    return this.closeZone(col + width, fill, zone);
+  }
+
+  /**
+   * Mosaics are delimiters: cells after them that are not rewritten take
+   * their background. Write a mosaic space in `zone` at column `next` when
+   * the last background differs, so the colour stops where the graphic ends.
+   */
+  closeZone(next, last, zone = 'black') {
+    if (next <= WIDTH && colorIndex(last) !== colorIndex(zone)) this.bg(zone).mosaic(0);
+    return this;
   }
 
   /**
    * Vertical bar chart with 1/3-cell resolution. Two bars per cell column
    * when `pair` is true (each bar is half a cell wide).
    */
-  chart(row, col, values, { height = 6, color = 'green', bg = 'black', max, pair = false } = {}) {
+  chart(row, col, values, { height = 6, color = 'green', bg = 'black', max, pair = false, zone = 'black' } = {}) {
     const top = max ?? Math.max(...values, 1);
     const levels = values.map((v) => Math.round((Math.max(0, v) / top) * height * 3));
     const columns = pair ? Math.ceil(levels.length / 2) : levels.length;
@@ -356,6 +372,7 @@ export class Page extends Videotex {
         cells.push(bits);
       }
       this.moveTo(cellRow, col).color(color).bg(bg).mosaic(cells);
+      this.closeZone(col + columns, bg, zone);
     }
     return this;
   }

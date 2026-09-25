@@ -130,3 +130,22 @@ test('the kiosk finds services by code, case and spaces aside', () => {
   assert.equal(network.answer('3615').code, '3615');
   assert.equal(network.answer('0123'), null);
 });
+
+test('progress bars and charts do not leak their background', () => {
+  const screen = new Screen();
+  new Decoder(screen).write(new Page().clear().progress(5, 3, 10, 0.5, { track: 'blue' }).chart(8, 3, [1, 2, 3], { height: 1, bg: 'red' }).bytes());
+  assert.equal(screen.resolveRow(5)[20].bg, 0);
+  assert.equal(screen.resolveRow(8)[20].bg, 0);
+});
+
+test('hints never run past column 40', () => {
+  const screen = new Screen();
+  new Decoder(screen).write(new Page().clear().hints(23, [['SUITE', 'page suivante'], ['RETOUR', 'page précédente'], ['SOMMAIRE', 'accueil']]).bytes());
+  assert.equal(screen.rowText(24).trim(), '');
+});
+
+test('double-width text reads once in the text mirror', () => {
+  const screen = new Screen();
+  new Decoder(screen).write(new Page().clear().print(5, 2, 'DEMAIN', { size: 'wide' }).bytes());
+  assert.equal(screen.rowText(5).trim(), 'DEMAIN');
+});

@@ -387,9 +387,16 @@ export class Screen {
     return out;
   }
 
-  /** Plain text of a row (status row is 0). */
+  /**
+   * Plain text of a row (status row is 0). Double-size characters are read
+   * once, on their bottom row; the extra cells of wide characters are
+   * skipped, so the text reads naturally (column positions may shift).
+   */
   rowText(row) {
-    return this.grid[row].map((cell) => (cell.height === 2 && cell.partY === 0 ? ' ' : cell.char)).join('');
+    return this.grid[row]
+      .filter((cell) => !(cell.width === 2 && cell.partX === 1))
+      .map((cell) => (cell.height === 2 && cell.partY === 0 ? ' ' : cell.char))
+      .join('');
   }
 
   /** Plain text of the page (rows 1..24), trailing spaces trimmed. */
