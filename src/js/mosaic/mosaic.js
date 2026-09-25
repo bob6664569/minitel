@@ -217,8 +217,15 @@ export function imageToMosaic(image, { palette = 'color', dither = 'ordered', st
  * @param {number} [options.row=1]
  * @param {number} [options.col=1]
  * @param {boolean} [options.separated=false]
+ * @param {number} [options.zone=0] background colour to leave behind the art
+ *
+ * Mosaic characters are Videotex delimiters: cells after them that are not
+ * rewritten take their background. So wherever the art stops (a transparent
+ * cell or its right edge), the last cell is oriented to end on the `zone`
+ * colour when it can, otherwise a mosaic space in that colour is written in
+ * the next cell to close the zone.
  */
-export function encodeCells(v, { cols, rows, cells }, { row = 1, col = 1, separated = false, maxCols = 40, maxRow = 24 } = {}) {
+export function encodeCells(v, { cols, rows, cells }, { row = 1, col = 1, separated = false, maxCols = 40, maxRow = 24, zone = 0 } = {}) {
   for (let cy = 0; cy < rows; cy++) {
     const r = row + cy;
     if (r < 1 || r > maxRow) continue;
@@ -231,14 +238,25 @@ export function encodeCells(v, { cols, rows, cells }, { row = 1, col = 1, separa
       if (run > 0) v.repeat(run);
       run = 0;
     };
+    const close = (c) => {
+      flush();
+      if (positioned && bg !== zone && c <= maxCols) {
+        v.bg(zone).mosaic(0);
+        bg = zone;
+      }
+      positioned = false;
+      last = null;
+    };
+    const opaque = (cx) => {
+      const cell = cells[cy * cols + cx];
+      return cx < cols && col + cx <= maxCols && cell && !cell.transparent;
+    };
     for (let cx = 0; cx < cols; cx++) {
       const c = col + cx;
       if (c < 1 || c > maxCols) continue;
       const cell = cells[cy * cols + cx];
       if (!cell || cell.transparent) {
-        flush();
-        positioned = false;
-        last = null;
+        close(c);
         continue;
       }
       if (!positioned) {
@@ -248,11 +266,18 @@ export function encodeCells(v, { cols, rows, cells }, { row = 1, col = 1, separa
         bg = 0;
         positioned = true;
       }
+      const edge = !opaque(cx + 1);
       let { bits, fg: cf, bg: cb } = cell;
-      // Solid cells and inverted patterns can often avoid a colour change.
       if (bits === 0 || bits === 63 || cf === cb) {
+        // Solid cell: pick the representation that needs no colour change.
         const colour = bits === 0 ? cb : cf;
-        if (colour === fg) { bits = 63; cf = fg; cb = bg; } else if (colour === bg) { bits = 0; cf = fg; cb = bg; } else { bits = 63; cf = colour; cb = bg; }
+        if (edge && colour === zone) { bits = 0; cf = fg; cb = zone; } else if (colour === fg) { bits = 63; cf = fg; cb = bg; } else if (colour === bg) { bits = 0; cf = fg; cb = bg; } else { bits = 63; cf = colour; cb = bg; }
+      } else if (edge && (cf === zone || cb === zone)) {
+        // Last cell before a gap: end on the zone colour.
+        if (cf === zone) {
+          bits = ~bits & 63;
+          [cf, cb] = [cb, cf];
+        }
       } else if ((cb !== fg) + (cf !== bg) < (cf !== fg) + (cb !== bg)) {
         // Inverting the pattern swaps the colours and saves attribute changes.
         bits = ~bits & 63;
@@ -261,13 +286,14 @@ export function encodeCells(v, { cols, rows, cells }, { row = 1, col = 1, separa
       const key = `${bits}:${cf}:${cb}`;
       if (key === last && run < 63) {
         run++;
-        continue;
+      } else {
+        flush();
+        if (cf !== fg) { v.color(cf); fg = cf; }
+        if (cb !== bg) { v.bg(cb); bg = cb; }
+        v.mosaic(bits);
+        last = key;
       }
-      flush();
-      if (cf !== fg) { v.color(cf); fg = cf; }
-      if (cb !== bg) { v.bg(cb); bg = cb; }
-      v.mosaic(bits);
-      last = key;
+      if (edge) close(c + 1);
     }
     flush();
   }

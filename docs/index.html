@@ -1,0 +1,649 @@
+<!doctype html>
+<html lang="en" data-mt-theme="color">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Documentation — minitel</title>
+  <meta name="description" content="Documentation of the minitel Videotex design system: tokens, grid, components, custom elements, the Videotex writer, sessions and the terminal.">
+  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="../src/fonts/minitel.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="../src/css/minitel.css">
+  <link rel="stylesheet" href="docs.css">
+</head>
+<body class="mt doc">
+  <nav class="mt-status doc-top" aria-label="Site">
+    <a class="doc-top__code" href="../index.html">3615 MINITEL</a>
+    <span class="doc-top__nav"><a href="../demos/teletel/">Télétel</a>  <a href="../demos/studio/">Studio</a></span>
+    <span class="doc-top__themes" role="group" aria-label="Theme">
+      <button type="button" data-theme="color" aria-pressed="true">Couleur</button>
+      <button type="button" data-theme="mono" aria-pressed="false">N&amp;B</button>
+      <button type="button" data-theme="amber" aria-pressed="false">Ambre</button>
+      <button type="button" data-theme="paper" aria-pressed="false">Papier</button>
+    </span>
+    <span class="mt-status__indicator">C</span>
+  </nav>
+
+  <div class="doc-layout">
+    <aside class="doc-nav" aria-label="Documentation">
+      <h2>Start</h2>
+      <ul>
+        <li><a href="#overview">Overview</a></li>
+        <li><a href="#install">Install</a></li>
+      </ul>
+      <h2>Foundations</h2>
+      <ul>
+        <li><a href="#colors">Colours &amp; themes</a></li>
+        <li><a href="#grid">Cells &amp; grid</a></li>
+        <li><a href="#type">Type</a></li>
+        <li><a href="#attributes">Attributes</a></li>
+      </ul>
+      <h2>Layout</h2>
+      <ul>
+        <li><a href="#screen">Screen</a></li>
+        <li><a href="#flow">Flow</a></li>
+      </ul>
+      <h2>Components</h2>
+      <ul>
+        <li><a href="#status">Status row</a></li>
+        <li><a href="#header">Header &amp; band</a></li>
+        <li><a href="#menu">Menu &amp; nav</a></li>
+        <li><a href="#field">Fields</a></li>
+        <li><a href="#keys">Keys &amp; buttons</a></li>
+        <li><a href="#panel">Panels &amp; frames</a></li>
+        <li><a href="#table">Tables</a></li>
+        <li><a href="#data">Data</a></li>
+        <li><a href="#messages">Messages</a></li>
+        <li><a href="#motion">Motion</a></li>
+        <li><a href="#crt">CRT</a></li>
+      </ul>
+      <h2>Elements</h2>
+      <ul>
+        <li><a href="#elements">Mosaics &amp; text</a></li>
+        <li><a href="#terminal">&lt;mt-terminal&gt;</a></li>
+        <li><a href="#device">&lt;mt-minitel&gt;</a></li>
+      </ul>
+      <h2>JavaScript</h2>
+      <ul>
+        <li><a href="#videotex">Videotex writer</a></li>
+        <li><a href="#page">Page helpers</a></li>
+        <li><a href="#session">Services</a></li>
+        <li><a href="#teletel">Télétel &amp; device</a></li>
+        <li><a href="#lines">WebSocket &amp; serial</a></li>
+        <li><a href="#mosaic-js">Mosaic imaging</a></li>
+        <li><a href="#audio">Sound</a></li>
+        <li><a href="#keyboard">Keyboard</a></li>
+        <li><a href="#references">References</a></li>
+      </ul>
+    </aside>
+
+    <main class="doc-main">
+      <!-- ================================================================ -->
+      <section id="overview">
+        <h1>Documentation</h1>
+        <p class="doc-lead">minitel is a design system built on the constraints of the French Minitel: one 8&times;10 bitmap font, eight colours, 40&times;25 character cells, 64 mosaic characters and a 1200-baud modem.</p>
+        <p>It comes in three layers you can use separately:</p>
+        <ol>
+          <li><b>CSS kit</b> — tokens, five themes, a cell grid and components for regular web pages (<code>src/css/</code>).</li>
+          <li><b>Custom elements</b> — <code>&lt;mt-terminal&gt;</code>, <code>&lt;mt-minitel&gt;</code>, <code>&lt;mt-keyboard&gt;</code>, <code>&lt;mt-bigtext&gt;</code>, <code>&lt;mt-mosaic&gt;</code>, <code>&lt;mt-typewriter&gt;</code> (<code>src/js/elements/</code>).</li>
+          <li><b>Videotex engine</b> — a stream writer, a STUM1B decoder, the terminal with its WebGL CRT, and a framework to write Télétel services (<code>src/js/</code>).</li>
+        </ol>
+        <p>No dependency, no build step: plain CSS and ES modules.</p>
+      </section>
+
+      <!-- ================================================================ -->
+      <section id="install">
+        <h2 class="doc-h">Install</h2>
+        <p>Link the stylesheet, opt in with <code>class="mt"</code> on any element (usually <code>&lt;body&gt;</code>), pick a theme with <code>data-mt-theme</code>. Load the module only if you use the custom elements.</p>
+        <pre class="doc-code" data-lang="html">
+          &lt;link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/bob6664569/minitel@master/src/css/minitel.css"&gt;
+          &lt;script type="module" src="https://cdn.jsdelivr.net/gh/bob6664569/minitel@master/src/js/elements/index.js"&gt;&lt;/script&gt;
+
+          &lt;body class="mt" data-mt-theme="color"&gt;
+        </pre>
+        <p>Or copy <code>src/</code> into your project. For JavaScript, import from <code>src/js/index.js</code>:</p>
+        <pre class="doc-code" data-lang="js">
+          import { Videotex, Page, Teletel, Terminal } from './minitel/src/js/index.js';
+        </pre>
+        <p>Every rule lives in the cascade layers <code>mt.*</code>, so your own unlayered CSS always wins. Serve the files over HTTP (ES modules do not load from <code>file://</code>): <code>npm run dev</code> starts a tiny server.</p>
+      </section>
+
+      <!-- ================================================================ -->
+      <section id="colors">
+        <h2 class="doc-h">Colours &amp; themes</h2>
+        <p>The eight Videotex colours, in the order of the attribute codes (<code>ESC 4/n</code> foreground, <code>ESC 5/n</code> background). Monochrome Minitels showed them as grey levels; the <code>mono</code>, <code>amber</code> and <code>green</code> themes do the same, so a design that works in colour keeps its hierarchy in grey.</p>
+        <ul class="doc-swatches">
+          <li style="--c: var(--mt-black)"><i></i><span>--mt-black</span><span>ESC 4/0 · 5/0</span><span>0 %</span></li>
+          <li style="--c: var(--mt-red)"><i></i><span>--mt-red</span><span>ESC 4/1 · 5/1</span><span>50 %</span></li>
+          <li style="--c: var(--mt-green)"><i></i><span>--mt-green</span><span>ESC 4/2 · 5/2</span><span>70 %</span></li>
+          <li style="--c: var(--mt-yellow)"><i></i><span>--mt-yellow</span><span>ESC 4/3 · 5/3</span><span>90 %</span></li>
+          <li style="--c: var(--mt-blue)"><i></i><span>--mt-blue</span><span>ESC 4/4 · 5/4</span><span>40 %</span></li>
+          <li style="--c: var(--mt-magenta)"><i></i><span>--mt-magenta</span><span>ESC 4/5 · 5/5</span><span>60 %</span></li>
+          <li style="--c: var(--mt-cyan)"><i></i><span>--mt-cyan</span><span>ESC 4/6 · 5/6</span><span>80 %</span></li>
+          <li style="--c: var(--mt-white)"><i></i><span>--mt-white</span><span>ESC 4/7 · 5/7</span><span>100 %</span></li>
+        </ul>
+        <table class="doc-table">
+          <thead><tr><th>Theme</th><th>Use</th></tr></thead>
+          <tbody>
+            <tr><td>color</td><td>Minitel Couleur: softened phosphor primaries. Default.</td></tr>
+            <tr><td>mono</td><td>Minitel 1, 1B and 2: STUM1B grey levels of a cool white phosphor (<code>--mt-phosphor</code>).</td></tr>
+            <tr><td>amber · green</td><td>Monochrome with another phosphor tint.</td></tr>
+            <tr><td>paper</td><td>Ink on cream, like the printed guides: colours become inks, no glow, no scanlines.</td></tr>
+          </tbody>
+        </table>
+        <h3 class="doc-h">Semantic tokens</h3>
+        <table class="doc-table">
+          <tbody>
+            <tr><td>--mt-bg / --mt-fg</td><td>page background and text (black / white)</td></tr>
+            <tr><td>--mt-accent</td><td>labels, links, numbers (cyan)</td></tr>
+            <tr><td>--mt-highlight</td><td>emphasis, titles, focus (yellow)</td></tr>
+            <tr><td>--mt-band</td><td>bands, headers, panels (blue)</td></tr>
+            <tr><td>--mt-success / --mt-danger / --mt-special</td><td>green / red / magenta</td></tr>
+            <tr><td>--mt-muted / --mt-dot</td><td>secondary text, dotted placeholders</td></tr>
+            <tr><td>--mt-on-{colour}</td><td>readable text colour on each background</td></tr>
+            <tr><td>--mt-glass</td><td>CRT glass around the picture</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- ================================================================ -->
+      <section id="grid">
+        <h2 class="doc-h">Cells &amp; grid</h2>
+        <p>A cell is one glyph: 8&times;10 font pixels, that is <code>0.8em</code> &times; <code>1em</code>. <code>.mt</code> and <code>.mt-screen</code> publish it as two absolute lengths, <code>--mt-col</code> and <code>--mt-row</code>, so spacing inside double-size text still lands on the page grid. Mosaic strokes are half a cell wide and a third of a row tall.</p>
+        <pre class="doc-code" data-lang="html">
+          &lt;div style="padding: var(--mt-row) calc(var(--mt-col) * 2)"&gt;…&lt;/div&gt;
+        </pre>
+        <p>Keep <code>--mt-font-size</code> (the row height) a multiple of 10px — 10, 20, 30… — and every font pixel falls on device pixels.</p>
+      </section>
+
+      <!-- ================================================================ -->
+      <section id="type">
+        <h2 class="doc-h">Type</h2>
+        <p>Videotex has four character sizes. The font ships a double-width and a double-height face, selected with <code>font-stretch</code>; double size is simply <code>2em</code>. <code>h1</code>, <code>h2</code> and <code>h3</code> default to them.</p>
+        <div class="doc-example">
+          <template>
+            <p>Normale</p>
+            <p class="mt-dh mt-fg-cyan">Double hauteur</p>
+            <p class="mt-dw mt-fg-green">Largeur</p>
+            <p class="mt-ds mt-fg-yellow">Taille</p>
+          </template>
+        </div>
+        <p>The font covers ASCII, French and Western European accents, the Videotex G2 symbols (£ § ° ± ÷ ¼ ½ ¾ Œ œ ß ← ↑ → ↓), block elements and the 64 sextants of Unicode's <em>Symbols for Legacy Computing</em> — mosaics are real text.</p>
+      </section>
+
+      <!-- ================================================================ -->
+      <section id="attributes">
+        <h2 class="doc-h">Attributes</h2>
+        <p>Every Videotex attribute is a utility class.</p>
+        <div class="doc-example">
+          <template>
+            <p>
+              <span class="mt-fg-yellow">yellow</span>
+              <span class="mt-bg-blue"> on blue </span>
+              <span class="mt-inverse"> inverse </span>
+              <span class="mt-underline">underline</span>
+              <span class="mt-blink mt-fg-red">flash</span>
+              <span class="mt-conceal">hidden until hover</span>
+            </p>
+            <p class="mt-fg-cyan">🬋🬋🬋🬋 <span class="mt-sep">🬋🬋🬋🬋</span> <span class="mt-glow mt-fg-green">glow</span></p>
+          </template>
+        </div>
+        <table class="doc-table">
+          <tbody>
+            <tr><td>.mt-fg-{colour} .mt-bg-{colour}</td><td>ESC 4/n, ESC 5/n</td></tr>
+            <tr><td>.mt-inverse</td><td>ESC 5/13 — inverse video</td></tr>
+            <tr><td>.mt-underline</td><td>ESC 5/10 — one font pixel on the bottom row</td></tr>
+            <tr><td>.mt-blink</td><td>ESC 4/8 — lit two thirds of the time (off with reduced motion)</td></tr>
+            <tr><td>.mt-conceal</td><td>ESC 5/8 — revealed on hover, focus or inside <code>.mt-revealed</code></td></tr>
+            <tr><td>.mt-sep</td><td>separated (disjoint) mosaics</td></tr>
+            <tr><td>.mt-normal .mt-dh .mt-dw .mt-ds</td><td>ESC 4/12 … 4/15 — sizes</td></tr>
+            <tr><td>.mt-glow</td><td>phosphor glow</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- ================================================================ -->
+      <section id="screen">
+        <h2 class="doc-h">Screen</h2>
+        <p>A fixed Minitel page: 40&times;25 cells (<code>.mt-screen--80</code> for 80 columns) scaled to the container width. Place items like a server positions its cursor: <code>--r</code> row (0 is the status row), <code>--c</code> column, <code>--w</code> width, <code>--h</code> height.</p>
+        <div class="doc-example" data-screen>
+          <template>
+            <div class="mt-screen mt-crt doc-screen">
+              <div class="mt-page">
+                <div class="mt-status mt-at" style="--r:0">3615 DEMO<span class="mt-status__indicator">C</span></div>
+                <div class="mt-at mt-bg-blue" style="--r:1; --h:3"></div>
+                <div class="mt-at mt-ds mt-fg-yellow" style="--r:2; --c:3; --h:2">DEMO</div>
+                <div class="mt-at" style="--r:6; --c:3">Placez chaque élément sur la grille.</div>
+                <mt-bigtext class="mt-at" color="cyan" style="--r:9; --c:3">40x25</mt-bigtext>
+                <div class="mt-at mt-prompt" style="--r:24; --c:2; --w:38">Choix <input class="mt-input" style="--len:2" aria-label="Choix"> puis <kbd class="mt-key">Envoi</kbd></div>
+              </div>
+            </div>
+          </template>
+        </div>
+      </section>
+
+      <section id="flow">
+        <h2 class="doc-h">Flow</h2>
+        <p>For regular pages: <code>.mt-flow</code> is a centred column measured in cells (<code>--mt-measure</code>, 40 by default, <code>.mt-flow--wide</code> for 80), <code>.mt-stack</code> spaces children by whole rows, <code>.mt-cluster</code> groups inline items, <code>.mt-grid</code> makes columns at least <code>--mt-span</code> cells wide.</p>
+        <div class="doc-example">
+          <template>
+            <div class="mt-grid" style="--mt-span: 14">
+              <div class="mt-panel">Pavé 1</div>
+              <div class="mt-panel mt-bg-magenta">Pavé 2</div>
+              <div class="mt-panel mt-bg-green">Pavé 3</div>
+            </div>
+          </template>
+        </div>
+      </section>
+
+      <!-- ================================================================ -->
+      <section id="status">
+        <h2 class="doc-h">Status row</h2>
+        <p>Row 0 carries service messages; the terminal shows its connection indicator in the last column: <b>F</b> offline, <b>C</b> connected.</p>
+        <div class="doc-example">
+          <template>
+            <div class="mt-status">3615 METEO  <span class="mt-fg-cyan">Bulletin de 18 h</span><span class="mt-status__indicator">C</span></div>
+          </template>
+        </div>
+      </section>
+
+      <section id="header">
+        <h2 class="doc-h">Header &amp; band</h2>
+        <div class="doc-example">
+          <template>
+            <header class="mt-header">
+              <span class="mt-header__code">3615 TRAINS</span>
+              <h1 class="mt-header__title">Horaires</h1>
+            </header>
+            <div class="mt-band">Bande bleue<span class="mt-band__end">1/3</span></div>
+            <div class="mt-band mt-bg-yellow">Bande jaune</div>
+          </template>
+        </div>
+      </section>
+
+      <section id="menu">
+        <h2 class="doc-h">Menu &amp; nav</h2>
+        <p>Numbered choices, as on every Télétel home page. Numbers come from CSS counters (<code>--mt-menu-start</code> to offset them).</p>
+        <div class="doc-example">
+          <template>
+            <ol class="mt-menu">
+              <li><a href="#menu">Prévisions du jour</a></li>
+              <li><a href="#menu">Carte de France</a><span class="mt-menu__hint">Nouveau</span></li>
+              <li><a href="#menu">Bulletin marine</a></li>
+            </ol>
+            <ol class="mt-nav">
+              <li><a href="#menu" aria-current="page">Accueil</a></li>
+              <li><a href="#menu">Services</a></li>
+              <li><a href="#menu">Aide</a></li>
+            </ol>
+          </template>
+        </div>
+      </section>
+
+      <section id="field">
+        <h2 class="doc-h">Fields</h2>
+        <p>Empty positions show the Minitel's dotted placeholders; <code>--len</code> sets the width in cells.</p>
+        <div class="doc-example">
+          <template>
+            <div class="mt-stack">
+              <label class="mt-field"><span class="mt-field__label">Nom</span><input class="mt-input" style="--len: 20" value="DUPONT"></label>
+              <label class="mt-field"><span class="mt-field__label">Ville</span><input class="mt-input" style="--len: 20"></label>
+              <textarea class="mt-textarea" style="--len: 30; --rows: 3" aria-label="Message"></textarea>
+              <div class="mt-cluster">
+                <label class="mt-check"><input type="checkbox" checked> Fumeur</label>
+                <label class="mt-check"><input type="radio" name="classe"> 1re</label>
+                <label class="mt-check"><input type="radio" name="classe" checked> 2e</label>
+              </div>
+              <div class="mt-cluster">
+                <select class="mt-select" aria-label="Classe"><option>1re classe</option><option>2e classe</option></select>
+                <input class="mt-range" type="range" style="--len: 12" aria-label="Volume">
+              </div>
+              <div class="mt-prompt">Votre choix <input class="mt-input" style="--len: 2" aria-label="Choix"> puis <kbd class="mt-key">Envoi</kbd></div>
+            </div>
+          </template>
+        </div>
+      </section>
+
+      <section id="keys">
+        <h2 class="doc-h">Keys &amp; buttons</h2>
+        <p>Key names are shown in inverse video, like on the screens of the time. Buttons are key caps with a half-cell mosaic shadow.</p>
+        <div class="doc-example">
+          <template>
+            <p>Tapez <kbd class="mt-key">Suite</kbd> ou <kbd class="mt-key mt-key--accent">Retour</kbd></p>
+            <div class="mt-cluster">
+              <button class="mt-button">Envoi</button>
+              <button class="mt-button mt-button--accent">Suite</button>
+              <button class="mt-button mt-button--band">Guide</button>
+              <button class="mt-button mt-button--danger">Fin</button>
+              <button class="mt-button mt-button--ghost">Retour</button>
+            </div>
+          </template>
+        </div>
+      </section>
+
+      <section id="panel">
+        <h2 class="doc-h">Panels &amp; frames</h2>
+        <div class="doc-example">
+          <template>
+            <div class="mt-stack">
+              <div class="mt-panel mt-panel--shadow mt-bg-magenta"><p>Un pavé coloré, son ombre en mosaïque.</p></div>
+              <div class="mt-frame"><div class="mt-frame__title">Cadre</div><p>Traits d'une demi-cellule.</p></div>
+              <hr class="mt-rule">
+              <hr class="mt-rule mt-rule--dotted">
+              <hr class="mt-rule mt-rule--checker">
+            </div>
+          </template>
+        </div>
+      </section>
+
+      <section id="table">
+        <h2 class="doc-h">Tables</h2>
+        <div class="doc-example">
+          <template>
+            <table class="mt-table mt-table--zebra">
+              <thead><tr><th>Train</th><th>Départ</th><th class="mt-num">Prix</th></tr></thead>
+              <tbody>
+                <tr><td>TGV 6103</td><td>07:12</td><td class="mt-num">312,00 F</td></tr>
+                <tr><td>TGV 6107</td><td>09:12</td><td class="mt-num">312,00 F</td></tr>
+                <tr><td>Rapide 5043</td><td>10:40</td><td class="mt-num">198,00 F</td></tr>
+              </tbody>
+            </table>
+            <ul class="mt-leaders">
+              <li><span>Paris</span><span>12°</span></li>
+              <li><span>Marseille</span><span>19°</span></li>
+            </ul>
+          </template>
+        </div>
+      </section>
+
+      <section id="data">
+        <h2 class="doc-h">Data</h2>
+        <p>Progress bars move by half cells, charts by thirds of a row: the resolution of mosaics.</p>
+        <div class="doc-example">
+          <template>
+            <div class="mt-stack">
+              <p><span class="mt-badge">Nouveau</span> <span class="mt-badge mt-badge--accent">3615</span> <span class="mt-badge mt-badge--danger">Urgent</span> <span class="mt-badge mt-badge--success">Ouvert</span></p>
+              <div class="mt-progress" style="--value: .63"></div>
+              <div class="mt-chart" style="--mt-chart-height: 3">
+                <i style="--v:.2"></i><i style="--v:.5"></i><i style="--v:.35"></i><i style="--v:.8"></i><i style="--v:.6"></i><i style="--v:1"></i><i style="--v:.7"></i><i style="--v:.45"></i><i style="--v:.9"></i><i style="--v:.55"></i><i style="--v:.3"></i><i style="--v:.75"></i>
+              </div>
+            </div>
+          </template>
+        </div>
+      </section>
+
+      <section id="messages">
+        <h2 class="doc-h">Messages</h2>
+        <div class="doc-example">
+          <template>
+            <div class="mt-stack">
+              <div class="mt-message mt-message--info">Nouveau message dans votre boîte</div>
+              <div class="mt-message mt-message--danger">Service momentanément indisponible</div>
+              <ul class="mt-tabs">
+                <li><a href="#messages" aria-current="page">Jour</a></li>
+                <li><a href="#messages">Semaine</a></li>
+              </ul>
+              <div class="mt-pager"><kbd class="mt-key">Suite</kbd> <kbd class="mt-key">Retour</kbd><span class="mt-pager__count">Page 2/5</span></div>
+            </div>
+          </template>
+        </div>
+        <p><code>.mt-dialog</code> styles a native <code>&lt;dialog&gt;</code> as a centred pavé with a mosaic shadow.</p>
+      </section>
+
+      <section id="motion">
+        <h2 class="doc-h">Motion</h2>
+        <p>Minitel motion is stepped: a whole cell at a time. Everything stops with <code>prefers-reduced-motion</code>.</p>
+        <div class="doc-example">
+          <template>
+            <p>Saisie <span class="mt-cursor"></span>   Chargement <span class="mt-spinner"></span></p>
+            <div class="mt-ticker"><span>DERNIERE MINUTE  +++  3615 METEO : grand soleil sur la Côte  +++  3615 BOURSE : l'indice 36 progresse</span></div>
+          </template>
+        </div>
+      </section>
+
+      <section id="crt">
+        <h2 class="doc-h">CRT</h2>
+        <p><code>.mt-crt</code> turns any element into a tube: scanlines aligned on the font's pixel rows, phosphor glow, vignette and glass. Toggle <code>.is-on</code> / <code>.is-off</code> for the power animations. The canvas terminal has its own WebGL version.</p>
+        <pre class="doc-code" data-lang="html">
+          &lt;div class="mt-screen mt-crt is-on"&gt;…&lt;/div&gt;
+        </pre>
+      </section>
+
+      <!-- ================================================================ -->
+      <section id="elements">
+        <h2 class="doc-h">Mosaics &amp; text</h2>
+        <h3 class="doc-h"><code>&lt;mt-bigtext&gt;</code></h3>
+        <p>Giant lettering drawn with sextants from the font's own glyphs (3&times;3 cells per character). It stays text for assistive technologies.</p>
+        <div class="doc-example">
+          <template>
+            <mt-bigtext color="yellow">3615</mt-bigtext>
+          </template>
+        </div>
+        <h3 class="doc-h"><code>&lt;mt-mosaic&gt;</code></h3>
+        <p>An image converted to Videotex mosaics as selectable text. Attributes: <code>src</code>, <code>cols</code>, <code>rows</code>, <code>palette</code> (<code>color</code> | <code>mono</code>), <code>dither</code> (<code>ordered</code> | <code>floyd-steinberg</code> | <code>none</code>), <code>fit</code>. Or pixel art with <code>art</code>: rows separated by <code>|</code>, colour letters <code>k r g y b m c w</code>.</p>
+        <div class="doc-example">
+          <template>
+            <mt-mosaic art="..yyyy..|.yyyyyy.|yykyykyy|yyyyyyyy|yykyykyy|yyykkyyy|.yyyyyy.|..yyyy.."></mt-mosaic>
+          </template>
+        </div>
+        <h3 class="doc-h"><code>&lt;mt-typewriter&gt;</code></h3>
+        <p>Reveals its content at modem speed (<code>baud</code>, 1200 by default: 120 characters per second), keeping the markup. <code>on-visible</code> waits until it scrolls into view.</p>
+        <div class="doc-example">
+          <template>
+            <mt-typewriter baud="300" on-visible><p>Connexion en cours... <span class="mt-fg-green">OK</span>. Bienvenue sur le <span class="mt-fg-yellow">3615 MINITEL</span>.</p></mt-typewriter>
+          </template>
+        </div>
+      </section>
+
+      <section id="terminal">
+        <h2 class="doc-h">&lt;mt-terminal&gt;</h2>
+        <p>A complete Minitel screen: Videotex decoder, modem throttle and WebGL CRT. Write bytes to it; listen to what the keyboard sends.</p>
+        <mt-terminal id="doc-terminal" theme="color" baud="1200" style="max-width: 640px"></mt-terminal>
+        <p><button type="button" class="mt-button mt-button--accent" id="doc-terminal-play">Rejouer</button></p>
+        <table class="doc-table">
+          <thead><tr><th>Attribute</th><th>Values</th></tr></thead>
+          <tbody>
+            <tr><td>theme</td><td>mono | color | amber | green</td></tr>
+            <tr><td>phosphor</td><td>#rrggbb tint of the mono phosphor</td></tr>
+            <tr><td>baud</td><td>300 | 1200 | 4800 | 9600 | 0 (instant)</td></tr>
+            <tr><td>effects</td><td>on | off (crisp pixels)</td></tr>
+            <tr><td>power</td><td>on | off</td></tr>
+            <tr><td>keyboard</td><td>on | off — capture the PC keyboard when focused</td></tr>
+          </tbody>
+        </table>
+        <table class="doc-table">
+          <thead><tr><th>Method / event</th><th></th></tr></thead>
+          <tbody>
+            <tr><td>write(data)</td><td>queue Videotex (writer, bytes, binary string) at modem speed</td></tr>
+            <tr><td>writeNow(data)</td><td>decode immediately</td></tr>
+            <tr><td>key(name) · type(text)</td><td>simulate the keyboard</td></tr>
+            <tr><td>connect(line) · disconnect()</td><td>attach a line end (see Télétel)</td></tr>
+            <tr><td>powerOn() · powerOff()</td><td>with the tube animations</td></tr>
+            <tr><td>drain() · text()</td><td>wait for the queue · read the page as text</td></tr>
+            <tr><td>mt-key · mt-data · mt-bell · mt-idle</td><td>events (bubbling)</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="device">
+        <h2 class="doc-h">&lt;mt-minitel&gt;</h2>
+        <p>The whole device: case (Minitel 1B or 2), CRT, keyboard, power switch, LED. Give it a Télétel network and it dials, whistles, connects and bills.</p>
+        <pre class="doc-code" data-lang="html">
+          &lt;mt-minitel model="1b" theme="mono" baud="1200"&gt;&lt;/mt-minitel&gt;
+        </pre>
+        <pre class="doc-code" data-lang="js">
+          const device = document.querySelector('mt-minitel');
+          device.network = new Teletel({ services: [meteo, trains] });
+          await device.powerOn();
+          await device.dial('3615', { code: 'METEO' }); // types the code at the kiosk
+        </pre>
+        <p><code>&lt;mt-keyboard for="id"&gt;</code> can also be used alone, next to any <code>&lt;mt-terminal&gt;</code>. Events: <code>mt-state</code>, <code>mt-tick</code> (duration and cost), <code>mt-service</code>, <code>mt-hangup</code>.</p>
+      </section>
+
+      <!-- ================================================================ -->
+      <section id="videotex">
+        <h2 class="doc-h">Videotex writer</h2>
+        <p><code>Videotex</code> builds the exact byte stream a Minitel server sends. Accents go through G2, other characters are transliterated, runs are compressed with <code>REP</code>.</p>
+        <pre class="doc-code" data-lang="js">
+          import { Videotex } from './src/js/index.js';
+
+          const v = new Videotex()
+            .clear()                       // FF
+            .cursor(false)                 // COFF
+            .moveTo(1, 1).bg('blue').text(' '.repeat(40))
+            .moveTo(3, 4).size('double').color('yellow').text('3615 METEO')
+            .moveTo(6, 2).color('white').text('Météo à Noël')   // SS2 accents
+            .moveTo(8, 2).mosaic(0b111111, 0b010101)            // G1 sextants
+            .status('Bulletin de 18 h');                        // row 0
+
+          v.bytes();   // Uint8Array
+        </pre>
+        <p>Remember the Videotex rule: background, underline and conceal are <em>zone</em> attributes. They take effect at the next space (or mosaic character) and last to the end of the row; every <code>moveTo</code> resets all attributes.</p>
+        <table class="doc-table">
+          <tbody>
+            <tr><td>clear() home() moveTo(r, c)</td><td>FF, RS, US — row 0 is the status row</td></tr>
+            <tr><td>color() bg() size() flash() invert() underline() conceal()</td><td>attributes; colours by name or 0..7</td></tr>
+            <tr><td>text() fill(ch, n) repeat(n)</td><td>G0/G2 text, REP</td></tr>
+            <tr><td>mosaic(...bits)</td><td>G1 characters from sextant bits (bit 0 top-left … bit 5 bottom-right)</td></tr>
+            <tr><td>clearEOL() eraseScreen() eraseLine()</td><td>CAN, CSI J, CSI K</td></tr>
+            <tr><td>scroll() lowercase() echo()</td><td>PRO2 rouleau / minuscules, PRO3 local echo</td></tr>
+            <tr><td>status(text)</td><td>write in row 0 and come back</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="page">
+        <h2 class="doc-h">Page helpers</h2>
+        <p><code>Page</code> extends the writer with the furniture of Télétel pages. Every helper positions itself and deals with zone attributes.</p>
+        <pre class="doc-code" data-lang="js">
+          new Page()
+            .clear()
+            .header({ title: 'Météo', code: 'METEO', bg: 'blue' })
+            .menu(["Aujourd'hui", 'Demain', { label: 'Carte', hint: 'Nouveau' }], { row: 7 })
+            .panel(15, 4, 18, 36, { bg: 'magenta', shadow: 'blue' })
+            .bigText(16, 26, '19°', { color: 'green' })
+            .art(20, 3, ['..yy..', '.yyyy.', 'yyyyyy'])
+            .table(8, 20, [{ title: 'Ville', width: 8 }, { title: 'T°', width: 4, align: 'right' }], rows)
+            .progress(22, 3, 20, 0.6)
+            .hints(23, [['SUITE', 'page suivante']])
+            .prompt({ label: 'Votre choix', length: 2 });
+        </pre>
+        <p>Also: <code>print</code>, <code>center</code>, <code>right</code>, <code>label</code>, <code>key</code>, <code>paragraph</code>, <code>band</code>, <code>hline</code>, <code>vline</code>, <code>box</code>, <code>pager</code>, <code>chart</code>; and the text helpers <code>wrap</code>, <code>pad</code>, <code>francs</code>.</p>
+      </section>
+
+      <section id="session">
+        <h2 class="doc-h">Services</h2>
+        <p>A service is an async function talking to a <code>Session</code>. Like a real server, the session echoes what the user types into fields; the terminal never echoes.</p>
+        <pre class="doc-code" data-lang="js">
+          export default {
+            code: 'HELLO',
+            name: 'Bonjour',
+            description: 'Mon premier service',
+            async run(session) {
+              session.write(new Page().clear().header({ title: 'Bonjour' }).print(10, 3, 'Nom :'));
+              const { key, value } = await session.input({ row: 10, col: 9, length: 20 });
+              if (key === 'SOMMAIRE') return;        // back to the kiosk
+              const answer = await session.form([    // SUITE / RETOUR between fields
+                { name: 'ville', row: 12, col: 9, length: 16 },
+                { name: 'dept', row: 13, col: 9, length: 2, accept: /\d/ },
+              ]);
+            },
+          };
+        </pre>
+        <table class="doc-table">
+          <tbody>
+            <tr><td>write(...data)</td><td>send Videotex</td></tr>
+            <tr><td>input(field)</td><td>edit one field → { key, value }; CORRECTION, ANNULATION handled</td></tr>
+            <tr><td>form(fields)</td><td>several fields → { key, values }</td></tr>
+            <tr><td>next({ timeout })</td><td>next event { type: 'char', char } or { type: 'key', key }</td></tr>
+            <tr><td>poll() · flush() · waitKey(keys) · sleep(ms)</td><td>real-time helpers for games</td></tr>
+            <tr><td>identify()</td><td>ENQROM: the terminal's identity</td></tr>
+            <tr><td>data · elapsed · disconnect()</td><td>per-session storage, time, hang up</td></tr>
+          </tbody>
+        </table>
+        <p>When the user hangs up, pending awaits reject with <code>Disconnected</code>, which <code>runService</code> swallows.</p>
+      </section>
+
+      <section id="teletel">
+        <h2 class="doc-h">Télétel &amp; device</h2>
+        <p><code>Teletel</code> is a network of services. Numbers like 3615 answer with a kiosk that asks for the service code (with a <code>GUIDE</code> listing); a service registered with <code>direct: true</code> answers its number itself, like the 3611 directory. <code>Minitel</code> is the device controller behind <code>&lt;mt-minitel&gt;</code>: local screen, dialing, modem handshake, connection indicator, billing.</p>
+        <pre class="doc-code" data-lang="js">
+          const network = new Teletel({ services: [meteo, trains, { ...annuaire, number: '3611', direct: true }] });
+          const minitel = new Minitel({ terminal: document.querySelector('mt-terminal'), network });
+          await minitel.powerOn();
+          await minitel.dial('3615', { code: 'METEO' });
+        </pre>
+      </section>
+
+      <section id="lines">
+        <h2 class="doc-h">WebSocket &amp; serial</h2>
+        <p>Terminals and services talk through lines. The same service can run on a real Minitel plugged in through a USB-TTL adapter on its DIN socket (Web Serial, 1200 bauds 7E1), and the terminal can connect to a remote Videotex server over WebSocket.</p>
+        <pre class="doc-code" data-lang="js">
+          import { createLine, websocketLine, serialLine, runService } from './src/js/index.js';
+
+          // in-page: terminal <-> service
+          const [terminalEnd, serverEnd] = createLine();
+          document.querySelector('mt-terminal').connect(terminalEnd);
+          runService(myService, serverEnd);
+
+          // a remote server
+          document.querySelector('mt-terminal').connect(websocketLine('wss://example.org/minitel'));
+
+          // a real Minitel (Chromium, after a click)
+          runService(myService, await serialLine({ baudRate: 1200 }));
+        </pre>
+      </section>
+
+      <section id="mosaic-js">
+        <h2 class="doc-h">Mosaic imaging</h2>
+        <pre class="doc-code" data-lang="js">
+          import { sampleImage, imageToMosaic, encodeCells, cellsToHTML, pixelArt, indicesToCells } from './src/js/index.js';
+
+          const pixels = sampleImage(img, 40, 24, { fit: 'cover' });           // 80 x 72 sub-pixels
+          const cells = imageToMosaic(pixels, { palette: 'color', dither: 'ordered' });
+          encodeCells(new Videotex().clear(), cells, { row: 1, col: 1 });    // compact Videotex
+          cellsToHTML(cells);                                                 // sextant text for the CSS kit
+        </pre>
+        <p>Each cell can show two colours only; the converter picks the best pair per cell, and the encoder tracks attributes, inverts patterns and uses <code>REP</code> to keep pages small.</p>
+      </section>
+
+      <section id="audio">
+        <h2 class="doc-h">Sound</h2>
+        <p><code>MinitelAudio</code> synthesises the French dial tone, DTMF, the ringback, the V.25/V.23 modem answer, the BEL buzz and key clicks with Web Audio. Call <code>unlock()</code> from a user gesture.</p>
+        <pre class="doc-code" data-lang="js">
+          const audio = new MinitelAudio();
+          audio.unlock();
+          await audio.dial('3615');
+          await audio.ringback();
+          await audio.handshake();
+        </pre>
+      </section>
+
+      <section id="keyboard">
+        <h2 class="doc-h">Keyboard</h2>
+        <p>With a terminal focused, the PC keyboard maps to the Minitel function keys. Arrows are sent as CSI sequences, like on the Minitel 2.</p>
+        <table class="doc-table">
+          <thead><tr><th>Minitel</th><th>PC</th><th>Bytes</th></tr></thead>
+          <tbody>
+            <tr><td>Envoi</td><td>Entrée</td><td>SEP 4/1</td></tr>
+            <tr><td>Retour</td><td>Page ↑ · Maj+⌫</td><td>SEP 4/2</td></tr>
+            <tr><td>Répétition</td><td>F2</td><td>SEP 4/3</td></tr>
+            <tr><td>Guide</td><td>F1</td><td>SEP 4/4</td></tr>
+            <tr><td>Annulation</td><td>Échap · Suppr</td><td>SEP 4/5</td></tr>
+            <tr><td>Sommaire</td><td>Début · Maj+Échap</td><td>SEP 4/6</td></tr>
+            <tr><td>Correction</td><td>⌫</td><td>SEP 4/7</td></tr>
+            <tr><td>Suite</td><td>Page ↓ · Maj+Entrée</td><td>SEP 4/8</td></tr>
+            <tr><td>Connexion Fin</td><td>Fin · F10</td><td>SEP 4/9</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="references">
+        <h2 class="doc-h">References</h2>
+        <p>The decoder follows the <em>Spécifications Techniques d'Utilisation du Minitel</em> (STUM1B): C0 controls, attribute sequences, serial zone attributes, the G0/G1/G2 sets, <code>REP</code>, <code>US</code> positioning in binary and decimal form, row 0, CSI cursor and erase functions, <code>PRO1</code>/<code>PRO2</code>/<code>PRO3</code> (ENQROM, rouleau, minuscules, echo). Colour grey levels are those of monochrome Minitels. The font, the components and the emulator are original work; no ROM or archive material is included.</p>
+      </section>
+    </main>
+  </div>
+
+  <script type="module" src="docs.js"></script>
+</body>
+</html>

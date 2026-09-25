@@ -290,8 +290,9 @@ export class Page extends Videotex {
    */
   art(row, col, lines, { ink = 'white', background, separated } = {}) {
     const image = pixelArt(lines, { ink: colorIndex(ink) });
-    const cells = indicesToCells(image, { background: background === undefined ? -1 : colorIndex(background) });
-    return encodeCells(this, cells, { row, col, separated });
+    const zone = background === undefined ? 0 : colorIndex(background);
+    const cells = indicesToCells(image, { background: background === undefined ? -1 : zone });
+    return encodeCells(this, cells, { row, col, separated, zone });
   }
 
   /**
@@ -313,8 +314,9 @@ export class Page extends Videotex {
         for (let x = 0; x < 5; x++) if (bits & (0x80 >> (x + 1))) data[y * width + i * advance + x] = ink;
       }
     });
-    const cells = indicesToCells({ width, height, data }, { background: background === undefined ? -1 : colorIndex(background) });
-    return encodeCells(this, cells, { row, col });
+    const zone = background === undefined ? 0 : colorIndex(background);
+    const cells = indicesToCells({ width, height, data }, { background: background === undefined ? -1 : zone });
+    return encodeCells(this, cells, { row, col, zone });
   }
 
   /** Horizontal progress bar with half-cell resolution. */

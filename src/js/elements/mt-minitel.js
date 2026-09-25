@@ -114,8 +114,8 @@ export class MinitelDeviceElement extends HTMLElement {
     return this.minitel?.network;
   }
 
-  async powerOn() {
-    await this.audio.unlock();
+  powerOn() {
+    this.audio.unlock();
     return this.minitel?.powerOn();
   }
 
@@ -129,8 +129,8 @@ export class MinitelDeviceElement extends HTMLElement {
   }
 
   /** Dial a number; `code` is typed at the kiosk once connected. */
-  async dial(number, options) {
-    await this.audio.unlock();
+  dial(number, options) {
+    this.audio.unlock();
     return this.minitel?.dial(number, options);
   }
 

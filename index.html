@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="en" data-mt-theme="color">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>minitel — a Videotex design system</title>
+  <meta name="description" content="The French Minitel as a design system: an 8×10 bitmap font with Videotex mosaics, 8-colour tokens, 40-column layouts, CSS components, and a faithful Videotex terminal with a WebGL CRT and a 1200-baud modem.">
+  <meta name="theme-color" content="#000000">
+  <meta property="og:title" content="minitel — a Videotex design system">
+  <meta property="og:description" content="40 columns, 8 colours, 64 mosaics, 1200 bauds. CSS components, web components and a faithful Minitel emulator.">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="src/fonts/minitel.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="src/css/minitel.css">
+  <link rel="stylesheet" href="site/landing.css">
+</head>
+<body class="mt lp">
+  <a class="mt-sr-only" href="#tokens">Skip to content</a>
+
+  <!-- Row 0 -->
+  <nav class="lp-status mt-status" aria-label="Sections">
+    <span class="lp-status__code">3615 MINITEL</span>
+    <ol class="mt-nav lp-status__nav">
+      <li><a href="#tokens">Tokens</a></li>
+      <li><a href="#type">Type</a></li>
+      <li><a href="#components">Components</a></li>
+      <li><a href="#terminal">Terminal</a></li>
+      <li><a href="#services">Services</a></li>
+      <li><a href="#demos">Demos</a></li>
+    </ol>
+    <a class="lp-status__docs" href="docs/">Docs</a>
+    <span class="mt-status__indicator" title="Connecté">C</span>
+  </nav>
+
+  <!-- Hero -->
+  <header class="lp-hero">
+    <div class="lp-hero__text">
+      <p class="lp-kicker"><span class="mt-badge">3615</span> <span class="mt-accent">Videotex design system</span></p>
+      <h1 class="lp-title"><mt-bigtext color="yellow">MINITEL</mt-bigtext></h1>
+      <p class="lp-lead">
+        The look, the feel and the <em>protocol</em> of the French Minitel, as a design system:
+        an 8×10 bitmap font with Videotex mosaics, eight-colour tokens, 40-column layouts,
+        CSS components, and a faithful Videotex terminal with a WebGL CRT and a 1200-baud modem.
+      </p>
+      <div class="mt-cluster lp-cta">
+        <a class="mt-button mt-button--accent" href="demos/teletel/">Dial 3615 &rarr;</a>
+        <a class="mt-button" href="docs/">Documentation</a>
+        <a class="mt-button mt-button--ghost" href="demos/studio/">Mosaic Studio</a>
+      </div>
+      <ul class="lp-facts">
+        <li><b>40&times;25</b> cells</li>
+        <li><b>8</b> colours</li>
+        <li><b>64</b> mosaics</li>
+        <li><b>1200</b> bauds</li>
+        <li><b>0</b> dependencies</li>
+      </ul>
+    </div>
+    <div class="lp-hero__device">
+      <mt-minitel id="hero-minitel" model="1b" theme="color" effects="on"></mt-minitel>
+      <p class="lp-device-note mt-muted">Live terminal. Click it and type: <kbd class="mt-key">1</kbd>&hellip;<kbd class="mt-key">6</kbd> <kbd class="mt-key">Suite</kbd> <kbd class="mt-key">Retour</kbd></p>
+    </div>
+  </header>
+
+  <main>
+    <!-- Tokens -->
+    <section class="lp-section" id="tokens" aria-labelledby="tokens-title">
+      <div class="lp-section__head">
+        <span class="lp-section__num">1</span>
+        <h2 class="lp-section__title" id="tokens-title">Tokens</h2>
+        <p class="lp-section__lead">Eight colours in the Videotex attribute order. On a monochrome Minitel they become grey levels: the whole kit re-skins itself. Try it on this page.</p>
+      </div>
+
+      <div class="lp-themes" role="radiogroup" aria-label="Theme">
+        <button type="button" role="radio" aria-checked="true" data-theme="color">Couleur</button>
+        <button type="button" role="radio" aria-checked="false" data-theme="mono">Noir &amp; blanc</button>
+        <button type="button" role="radio" aria-checked="false" data-theme="amber">Ambre</button>
+        <button type="button" role="radio" aria-checked="false" data-theme="green">Vert</button>
+        <button type="button" role="radio" aria-checked="false" data-theme="paper">Papier</button>
+      </div>
+
+      <ul class="lp-palette">
+        <li style="--c: var(--mt-black)"><span class="lp-swatch"></span><b>black</b><code>ESC 4/0 5/0</code><span>0 %</span></li>
+        <li style="--c: var(--mt-blue)"><span class="lp-swatch"></span><b>blue</b><code>ESC 4/4 5/4</code><span>40 %</span></li>
+        <li style="--c: var(--mt-red)"><span class="lp-swatch"></span><b>red</b><code>ESC 4/1 5/1</code><span>50 %</span></li>
+        <li style="--c: var(--mt-magenta)"><span class="lp-swatch"></span><b>magenta</b><code>ESC 4/5 5/5</code><span>60 %</span></li>
+        <li style="--c: var(--mt-green)"><span class="lp-swatch"></span><b>green</b><code>ESC 4/2 5/2</code><span>70 %</span></li>
+        <li style="--c: var(--mt-cyan)"><span class="lp-swatch"></span><b>cyan</b><code>ESC 4/6 5/6</code><span>80 %</span></li>
+        <li style="--c: var(--mt-yellow)"><span class="lp-swatch"></span><b>yellow</b><code>ESC 4/3 5/3</code><span>90 %</span></li>
+        <li style="--c: var(--mt-white)"><span class="lp-swatch"></span><b>white</b><code>ESC 4/7 5/7</code><span>100 %</span></li>
+      </ul>
+
+      <div class="lp-grid-demo">
+        <div class="lp-grid-demo__cells" aria-hidden="true"></div>
+        <p>Everything snaps to the character cell: <code>--mt-col</code> &times; <code>--mt-row</code>, one 8&times;10 glyph. Mosaic strokes are a half cell wide and a third of a row tall.</p>
+      </div>
+    </section>
+
+    <!-- Type -->
+    <section class="lp-section" id="type" aria-labelledby="type-title">
+      <div class="lp-section__head">
+        <span class="lp-section__num">2</span>
+        <h2 class="lp-section__title" id="type-title">Type</h2>
+        <p class="lp-section__lead">One pixel font, four Videotex sizes. Pure CSS: <code>font-stretch</code> picks the double-width and double-height faces.</p>
+      </div>
+      <div class="lp-sizes">
+        <div><span class="lp-sizes__label">.mt-normal</span><span class="mt-fg-white">Normale</span></div>
+        <div><span class="lp-sizes__label">.mt-dh</span><span class="mt-dh mt-fg-cyan">Double hauteur</span></div>
+        <div><span class="lp-sizes__label">.mt-dw</span><span class="mt-dw mt-fg-green">Largeur</span></div>
+        <div><span class="lp-sizes__label">.mt-ds</span><span class="mt-ds mt-fg-yellow">Taille</span></div>
+      </div>
+      <pre class="lp-glyphs" aria-label="Character set">!"#$%&amp;'()*+,-./0123456789:;&lt;=&gt;?
+@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_
+`abcdefghijklmnopqrstuvwxyz{|}~
+àâäçéèêëîïôöùûüÿœ ÀÂÇÉÈÊËÎÔÙÛ «»°£§±÷×€
+←↑→↓ ▶◀▲▼ •·… ♥ ✓ ■ █▌▐▀▄ ░▒▓
+<span class="mt-fg-cyan">🬀🬁🬂🬃🬄🬅🬆🬇🬈🬉🬊🬋🬌🬍🬎🬏🬐🬑🬒🬓▌🬔🬕🬖🬗🬘🬙🬚🬛🬜🬝</span>
+<span class="mt-fg-cyan">🬞🬟🬠🬡🬢🬣🬤🬥🬦🬧▐🬨🬩🬪🬫🬬🬭🬮🬯🬰🬱🬲🬳🬴🬵🬶🬷🬸🬹🬺🬻█</span>
+<span class="mt-fg-magenta mt-sep">🬀🬁🬂🬃🬄🬅🬆🬇🬈🬉🬊🬋🬌🬍🬎🬏🬐🬑🬒🬓▌🬔🬕🬖🬗🬘🬙🬚🬛🬜🬝</span></pre>
+      <p class="lp-note">The 64 mosaic characters are Unicode's <em>Symbols for Legacy Computing</em> sextants, so mosaic art stays real, selectable text. The second set uses the separated shape.</p>
+    </section>
+
+    <!-- Components -->
+    <section class="lp-section" id="components" aria-labelledby="components-title">
+      <div class="lp-section__head">
+        <span class="lp-section__num">3</span>
+        <h2 class="lp-section__title" id="components-title">Components</h2>
+        <p class="lp-section__lead">A 40&times;25 page grid you place things on like a Videotex server would, and components for regular fluid pages. This screen is plain HTML and CSS — select the text.</p>
+      </div>
+      <div class="lp-split">
+        <div class="mt-screen mt-crt lp-html-screen">
+          <div class="mt-page">
+            <div class="mt-status mt-at" style="--r:0"><span>3615 METEO</span><span class="mt-status__indicator">C</span></div>
+            <div class="mt-at mt-bg-blue" style="--r:1; --h:3"></div>
+            <div class="mt-at mt-ds mt-fg-yellow" style="--r:2; --c:3; --h:2">METEO</div>
+            <div class="mt-at mt-fg-cyan" style="--r:1; --c:28">3615 METEO</div>
+            <div class="mt-at mt-fg-cyan" style="--r:3; --c:22">France entière</div>
+            <div class="mt-at" style="--r:5; --c:3">Prévisions du jeudi 25</div>
+            <ol class="mt-menu mt-at" style="--r:7; --c:3; --h:8; --w:36">
+              <li><a href="demos/teletel/?code=METEO">Aujourd'hui</a><span class="mt-menu__hint">12°</span></li>
+              <li><a href="demos/teletel/?code=METEO">Demain</a><span class="mt-menu__hint">15°</span></li>
+              <li><a href="demos/teletel/?code=METEO">Carte de France</a></li>
+              <li><a href="demos/teletel/?code=METEO">Bulletin marine</a></li>
+            </ol>
+            <mt-bigtext class="mt-at" color="green" style="--r:16; --c:25">19°</mt-bigtext>
+            <div class="mt-at mt-fg-white" style="--r:17; --c:3">Nice</div>
+            <div class="mt-at mt-blink mt-fg-red" style="--r:18; --c:3">Vent fort</div>
+            <div class="mt-at mt-prompt" style="--r:24; --c:2; --w:38"><span>Votre choix</span><input class="mt-input" style="--len:2" aria-label="Votre choix"><span>puis</span><kbd class="mt-key">Envoi</kbd></div>
+          </div>
+        </div>
+        <ul class="lp-components">
+          <li><a href="docs/#screen">.mt-screen</a> <span>40×25 grid, <code>--r</code>/<code>--c</code> placement</span></li>
+          <li><a href="docs/#status">.mt-status</a> <span>row 0 and the C/F indicator</span></li>
+          <li><a href="docs/#header">.mt-header · .mt-band</a> <span>service headers and colour bands</span></li>
+          <li><a href="docs/#menu">.mt-menu · .mt-nav</a> <span>numbered choices</span></li>
+          <li><a href="docs/#field">.mt-field · .mt-input</a> <span>dotted Minitel fields</span></li>
+          <li><a href="docs/#keys">.mt-key · .mt-button</a> <span>key caps in inverse video</span></li>
+          <li><a href="docs/#panel">.mt-panel · .mt-frame</a> <span>pavés, mosaic shadows and frames</span></li>
+          <li><a href="docs/#table">.mt-table · .mt-leaders</a> <span>timetables and dotted leaders</span></li>
+          <li><a href="docs/#data">.mt-progress · .mt-chart</a> <span>half-cell and third-row steps</span></li>
+          <li><a href="docs/#motion">.mt-blink · .mt-ticker · .mt-cursor</a> <span>1985 motion design</span></li>
+          <li><a href="docs/#crt">.mt-crt</a> <span>pixel-aligned scanlines, glow, power animation</span></li>
+          <li><a href="docs/#elements">&lt;mt-bigtext&gt; &lt;mt-mosaic&gt; &lt;mt-typewriter&gt;</a></li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Terminal -->
+    <section class="lp-section" id="terminal" aria-labelledby="terminal-title">
+      <div class="lp-section__head">
+        <span class="lp-section__num">4</span>
+        <h2 class="lp-section__title" id="terminal-title">Terminal</h2>
+        <p class="lp-section__lead">A Videotex decoder that follows the STUM1B: serial attributes, G0/G1/G2 sets, repetition, row 0, CSI and PRO sequences. It draws at the Minitel's native 320&times;250 and a WebGL shader does the tube.</p>
+      </div>
+      <div class="lp-split lp-split--terminal">
+        <div class="lp-terminal">
+          <mt-terminal id="demo-terminal" theme="color" baud="1200"></mt-terminal>
+          <div class="mt-cluster lp-terminal__controls">
+            <button type="button" class="mt-button mt-button--accent" id="replay">Replay</button>
+            <select class="mt-select" id="replay-baud" aria-label="Modem speed">
+              <option value="300">300 bauds</option>
+              <option value="1200" selected>1200 bauds</option>
+              <option value="9600">9600 bauds</option>
+            </select>
+            <span class="mt-muted" id="replay-bytes"></span>
+          </div>
+        </div>
+<pre class="lp-code"><code><span class="c">// A page, built with the writer</span>
+<span class="k">import</span> { Page } <span class="k">from</span> <span class="s">'minitel-ds'</span>;
+
+<span class="k">const</span> page = <span class="k">new</span> Page()
+  .clear()
+  .header({ title: <span class="s">'Météo'</span>,
+            code: <span class="s">'METEO'</span> })
+  .menu([<span class="s">"Aujourd'hui"</span>, <span class="s">'Demain'</span>,
+         <span class="s">'Carte de France'</span>])
+  .bigText(<span class="n">16</span>, <span class="n">24</span>, <span class="s">'19°'</span>,
+           { color: <span class="s">'green'</span> })
+  .prompt();
+
+page.bytes();  <span class="c">// for a real Minitel</span>
+terminal.write(page); <span class="c">// 1200 bd</span></code></pre>
+      </div>
+    </section>
+
+    <!-- Services -->
+    <section class="lp-section" id="services" aria-labelledby="services-title">
+      <div class="lp-section__head">
+        <span class="lp-section__num">5</span>
+        <h2 class="lp-section__title" id="services-title">Services</h2>
+        <p class="lp-section__lead">Write a Télétel service as an async function. The session echoes what users type, handles fields and function keys, and the same code can drive a real Minitel over Web Serial.</p>
+      </div>
+      <div class="lp-split">
+<pre class="lp-code"><code><span class="k">export default</span> {
+  code: <span class="s">'HELLO'</span>,
+  <span class="k">async</span> run(session) {
+    session.write(<span class="k">new</span> Page().clear()
+      .header({ title: <span class="s">'Bonjour'</span> })
+      .print(<span class="n">10</span>, <span class="n">3</span>, <span class="s">'Nom :'</span>));
+
+    <span class="k">const</span> { key, value } =
+      <span class="k">await</span> session.input({
+        row: <span class="n">10</span>, col: <span class="n">9</span>, length: <span class="n">20</span>,
+      });
+
+    <span class="k">if</span> (key === <span class="s">'ENVOI'</span>) {
+      session.write(<span class="k">new</span> Page()
+        .print(<span class="n">14</span>, <span class="n">3</span>, <span class="s">`Salut ${value}`</span>,
+          { size: <span class="s">'double'</span> }));
+    }
+  },
+};</code></pre>
+        <div class="lp-services">
+          <mt-bigtext color="cyan">3615</mt-bigtext>
+          <p>The demo network ships eight services, from the mosaic weather map to a snake game at sextant resolution.</p>
+          <ul class="mt-leaders lp-services__list">
+            <li><a href="demos/teletel/?code=METEO">METEO</a><span>carte de France</span></li>
+            <li><a href="demos/teletel/?code=TRAINS">TRAINS</a><span>horaires</span></li>
+            <li><a href="demos/teletel/?number=3611">3611</a><span>annuaire</span></li>
+            <li><a href="demos/teletel/?code=BOURSE">BOURSE</a><span>cours en direct</span></li>
+            <li><a href="demos/teletel/?code=SERPENT">SERPENT</a><span>jeu</span></li>
+            <li><a href="demos/teletel/?code=DIALOGUE">DIALOGUE</a><span>messagerie</span></li>
+            <li><a href="demos/teletel/?code=ASTRO">ASTRO</a><span>horoscope</span></li>
+            <li><a href="demos/teletel/?code=CODE">CODE</a><span>la mire</span></li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- Demos -->
+    <section class="lp-section" id="demos" aria-labelledby="demos-title">
+      <div class="lp-section__head">
+        <span class="lp-section__num">6</span>
+        <h2 class="lp-section__title" id="demos-title">Demos</h2>
+      </div>
+      <div class="lp-cards">
+        <a class="lp-card mt-panel mt-panel--shadow mt-bg-blue" href="demos/teletel/">
+          <span class="lp-card__title">Télétel</span>
+          <span>Dial 3615, hear the modem whistle, type the service code. A Minitel 1B or 2 with its keyboard, eight services and a running bill in francs.</span>
+          <span class="mt-key">Connexion</span>
+        </a>
+        <a class="lp-card mt-panel mt-panel--shadow mt-bg-magenta" href="demos/studio/">
+          <span class="lp-card__title">Mosaic Studio</span>
+          <span>Turn any picture, or your webcam live, into Videotex mosaics. Export .vdt, PNG or HTML. Plays .vdt files at modem speed.</span>
+          <span class="mt-key">Ouvrir</span>
+        </a>
+        <a class="lp-card mt-panel mt-panel--shadow mt-bg-cyan" href="docs/">
+          <span class="lp-card__title">Documentation</span>
+          <span>Tokens, layout, every component with its markup, custom elements, the Videotex writer, sessions and the terminal API.</span>
+          <span class="mt-key">Lire</span>
+        </a>
+      </div>
+    </section>
+
+    <!-- Get started -->
+    <section class="lp-section" id="start" aria-labelledby="start-title">
+      <div class="lp-section__head">
+        <span class="lp-section__num">7</span>
+        <h2 class="lp-section__title" id="start-title">Get started</h2>
+        <p class="lp-section__lead">No build step. One stylesheet, one optional module.</p>
+      </div>
+<pre class="lp-code lp-code--wrap"><code><span class="c">&lt;!-- CSS: tokens, components, fonts --&gt;</span>
+&lt;link rel=<span class="s">"stylesheet"</span> href=<span class="s">"https://cdn.jsdelivr.net/gh/bob6664569/minitel@master/src/css/minitel.css"</span>&gt;
+
+<span class="c">&lt;!-- Custom elements: terminal, device, keyboard, mosaics --&gt;</span>
+&lt;script type=<span class="s">"module"</span> src=<span class="s">"https://cdn.jsdelivr.net/gh/bob6664569/minitel@master/src/js/elements/index.js"</span>&gt;&lt;/script&gt;
+
+&lt;body class=<span class="s">"mt"</span> data-mt-theme=<span class="s">"color"</span>&gt;
+  &lt;header class=<span class="s">"mt-header"</span>&gt;
+    &lt;span class=<span class="s">"mt-header__code"</span>&gt;3615 HELLO&lt;/span&gt;
+    &lt;h1 class=<span class="s">"mt-header__title"</span>&gt;Bonjour&lt;/h1&gt;
+  &lt;/header&gt;
+  &lt;mt-minitel&gt;&lt;/mt-minitel&gt;
+&lt;/body&gt;</code></pre>
+    </section>
+  </main>
+
+  <footer class="lp-footer">
+    <div class="mt-band mt-bg-white lp-footer__band">
+      <span>FIN DE CONNEXION</span>
+      <span class="mt-band__end" id="bill">0,00 F</span>
+    </div>
+    <p class="lp-footer__text">
+      <span id="bill-text">This visit cost you 0,00 F at 1,29 F/min.</span>
+      A tribute to the Minitel (1982–2012). Font, components and emulator written from scratch;
+      protocol after the STUM1B specification.
+      <a href="https://github.com/bob6664569/minitel">Source on GitHub</a>.
+    </p>
+  </footer>
+
+  <script type="module" src="site/landing.js"></script>
+</body>
+</html>

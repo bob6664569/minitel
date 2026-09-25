@@ -166,3 +166,25 @@ test('an empty mosaic cell is blank, not a full block', async () => {
   assert.ok(sextantRows(sextantBits(' ')).every((row) => row === 0));
   for (let bits = 0; bits < 64; bits++) assert.equal(sextantBits(sextantChar(bits)), bits);
 });
+
+test('mosaic art closes its background zone at gaps and edges', async () => {
+  const { pixelArt, indicesToCells, encodeCells } = await import('../src/js/mosaic/mosaic.js');
+  // green/yellow body, a transparent gap, then a red cell
+  const art = pixelArt(['gygy..rr', 'gygy..rr', 'gygy..rr']);
+  const v = new Videotex().clear();
+  encodeCells(v, indicesToCells(art), { row: 2, col: 1 });
+  const screen = new Screen();
+  new Decoder(screen).write(v.bytes());
+  const row = screen.resolveRow(2);
+  // colour shown by a cell: full blocks show fg, empty cells show bg
+  const shown = (c) => (c.char === '\u2588' ? c.fg : c.bg);
+  assert.equal(shown(row[2]), 0, 'the gap stays black');
+  assert.equal(shown(row[3]), 1, 'the red cell after the gap');
+  assert.equal(shown(row[5]), 0, 'nothing leaks after the art');
+  // on a band, the zone is the band colour
+  const band = new Videotex().clear().moveTo(5, 1).bg('blue').fill(' ', 40);
+  encodeCells(band, indicesToCells(pixelArt(['yy', 'yy', 'yy']), { background: 4 }), { row: 5, col: 3, zone: 4 });
+  const s2 = new Screen();
+  new Decoder(s2).write(band.bytes());
+  assert.equal(s2.resolveRow(5)[4].bg, 4, 'band continues after the art');
+});

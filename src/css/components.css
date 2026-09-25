@@ -253,6 +253,9 @@
 
 .mt-nav > li::before {
   content: counter(mt-nav) " ";
+  display: inline;
+  width: auto;
+  margin: 0;
   color: var(--mt-accent);
 }
 

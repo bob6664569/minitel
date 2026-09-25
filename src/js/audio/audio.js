@@ -42,10 +42,14 @@ export class MinitelAudio {
     return this.context;
   }
 
-  /** Resume the audio context (call from a user gesture). */
-  async unlock() {
+  /**
+   * Resume the audio context. Call it from a user gesture; it never blocks
+   * (browsers keep resume() pending until the page has been interacted with).
+   */
+  unlock() {
+    if (this.mutedValue) return;
     const ctx = this.ctx;
-    if (ctx && ctx.state !== 'running') await ctx.resume().catch(() => {});
+    if (ctx && ctx.state !== 'running') ctx.resume().catch(() => {});
   }
 
   get muted() { return this.mutedValue; }
@@ -85,8 +89,9 @@ export class MinitelAudio {
    * @param {number} duration seconds
    */
   tone(freqs, duration, { gain = 0.2, type = 'sine', when = 0, attack = 0.005, release = 0.01, phone = true } = {}) {
+    if (this.mutedValue) return;
     const ctx = this.ctx;
-    if (!ctx || this.mutedValue) return;
+    if (!ctx) return;
     const start = ctx.currentTime + when;
     const env = ctx.createGain();
     env.gain.setValueAtTime(0, start);
@@ -106,8 +111,9 @@ export class MinitelAudio {
 
   /** Play a generated buffer of samples (mono, -1..1). */
   buffer(samples, { gain = 0.2, when = 0, phone = true } = {}) {
+    if (this.mutedValue) return;
     const ctx = this.ctx;
-    if (!ctx || this.mutedValue) return;
+    if (!ctx) return;
     const buffer = ctx.createBuffer(1, samples.length, ctx.sampleRate);
     buffer.copyToChannel(samples, 0);
     const source = this.track(ctx.createBufferSource());
@@ -152,7 +158,7 @@ export class MinitelAudio {
    * 2100 Hz space), mixed with the 75-baud return channel (390/450 Hz).
    */
   fsk(bits, { baud = 1200, mark = 1300, space = 2100, back = true } = {}) {
-    const ctx = this.ctx;
+    const ctx = this.mutedValue ? null : this.ctx;
     if (!ctx) return new Float32Array(0);
     const rate = ctx.sampleRate;
     const perBit = rate / baud;
@@ -213,8 +219,9 @@ export class MinitelAudio {
 
   /** Mechanical key click. */
   click() {
+    if (this.mutedValue) return;
     const ctx = this.ctx;
-    if (!ctx || this.mutedValue) return;
+    if (!ctx) return;
     const n = Math.floor(ctx.sampleRate * 0.012);
     const samples = new Float32Array(n);
     for (let i = 0; i < n; i++) samples[i] = (Math.random() * 2 - 1) * (1 - i / n) ** 4;

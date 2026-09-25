@@ -69,6 +69,7 @@ function apply() {
   device.setAttribute('baud', baud.value);
   device.setAttribute('effects', crt.checked ? 'on' : 'off');
   device.audio.muted = !sound.checked;
+  device.audio.unlock();
   store.set('model', model.value);
   store.set('theme', theme.value);
   store.set('baud', baud.value);
