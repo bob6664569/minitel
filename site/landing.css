@@ -143,6 +143,16 @@ body.lp::after {
   padding: 0 calc(var(--mt-col) / 2);
 }
 
+/* News crawl between the hero and the sections */
+.lp-ticker {
+  display: block;
+  padding: 0;
+}
+
+.lp-ticker .mt-ticker {
+  color: var(--mt-on-yellow);
+}
+
 /* Sections --------------------------------------------------------------- */
 
 .lp-section {

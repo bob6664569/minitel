@@ -9,6 +9,7 @@
  *   'key'    { detail: { key?, text? } } keyboard activity, before encoding
  *   'bell'   BEL received
  *   'idle'   the receive queue is empty
+ *   'receive' { detail: { bytes, baud } } bytes queued at modem speed
  *   'mode'   { detail: { mode, value } } lowercase / echo switches
  */
 import { Screen } from '../videotex/screen.js';
@@ -83,6 +84,7 @@ export class Terminal extends EventTarget {
       return;
     }
     this.queue.push(bytes);
+    this.dispatchEvent(new CustomEvent('receive', { detail: { bytes, baud: this.baud } }));
   }
 
   /** Decode bytes immediately, bypassing the modem speed. */

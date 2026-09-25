@@ -196,8 +196,14 @@ export class MinitelAudio {
     await wait(650);
   }
 
-  /** Data sound for bytes actually transmitted (7E1 framing). */
+  /**
+   * Data sound for bytes actually transmitted (7E1 framing), queued after
+   * the data already playing so it follows the modem's pace.
+   */
   data(bytes, baud = 1200) {
+    if (this.mutedValue || !baud) return;
+    const ctx = this.ctx;
+    if (!ctx) return;
     const bits = [];
     for (const byte of bytes) {
       let parity = 0;
@@ -209,7 +215,9 @@ export class MinitelAudio {
       }
       bits.push(parity, 1);
     }
-    this.buffer(this.fsk(bits, { baud, back: false }), { gain: 0.06 });
+    const when = Math.max(0, (this.dataCursor || 0) - ctx.currentTime);
+    this.buffer(this.fsk(bits, { baud, back: false }), { gain: 0.05, when });
+    this.dataCursor = ctx.currentTime + when + bits.length / baud;
   }
 
   /** The Minitel BEL: a short buzz. */

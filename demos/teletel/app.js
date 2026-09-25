@@ -56,12 +56,14 @@ const theme = document.getElementById('set-theme');
 const baud = document.getElementById('set-baud');
 const sound = document.getElementById('set-sound');
 const crt = document.getElementById('set-crt');
+const dataSound = document.getElementById('set-data');
 
 model.value = params.get('model') || store.get('model', '1b');
 theme.value = params.get('theme') || store.get('theme', 'mono');
 baud.value = params.get('baud') || store.get('baud', '1200');
 sound.checked = store.get('sound', 'on') === 'on';
 crt.checked = store.get('crt', 'on') === 'on';
+dataSound.checked = store.get('data', 'off') === 'on';
 
 function apply() {
   device.setAttribute('model', model.value);
@@ -70,13 +72,15 @@ function apply() {
   device.setAttribute('effects', crt.checked ? 'on' : 'off');
   device.audio.muted = !sound.checked;
   device.audio.unlock();
+  device.minitel.dataSound = dataSound.checked;
+  store.set('data', dataSound.checked ? 'on' : 'off');
   store.set('model', model.value);
   store.set('theme', theme.value);
   store.set('baud', baud.value);
   store.set('sound', sound.checked ? 'on' : 'off');
   store.set('crt', crt.checked ? 'on' : 'off');
 }
-for (const input of [model, theme, baud, sound, crt]) input.addEventListener('change', apply);
+for (const input of [model, theme, baud, sound, crt, dataSound]) input.addEventListener('change', apply);
 apply();
 
 /* ---------------------------------------------------------------------- */
@@ -134,5 +138,14 @@ if (params.has('autostart') || params.has('code') || params.has('number')) {
   if (params.has('autostart')) go();
   else hint.addEventListener('click', go, { once: true });
 }
+
+/* The whole page is the Minitel: typing anywhere goes to the terminal. */
+document.addEventListener('keydown', (event) => {
+  const target = event.target;
+  if (target.closest?.('mt-terminal, input, select, textarea, button, a')) return;
+  if (!device.minitel || device.minitel.state === 'off') return;
+  device.terminal.onKeyDown(event);
+  device.focus({ preventScroll: true });
+});
 
 window.teletel = { device, network };

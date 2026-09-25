@@ -48,6 +48,10 @@ export class Minitel extends EventTarget {
     this.term.addEventListener('key', this.onKey);
     this.term.addEventListener('data', this.onData);
     this.term.addEventListener('bell', () => this.audio.beep());
+    // Optional: hear the V.23 signal of every byte received ("dataSound").
+    this.term.addEventListener('receive', (e) => {
+      if (this.dataSound && this.state === 'connected') this.audio.data(e.detail.bytes, e.detail.baud);
+    });
   }
 
   get term() {
@@ -179,22 +183,33 @@ export class Minitel extends EventTarget {
     const status = (text) => this.term.writeNow(new Videotex().moveTo(0, 1).color('white').text(text).clearEOL().lf());
     const quick = fast || !this.audio.ready;
 
+    // The user may hang up (or power off) while we wait: stop quietly then.
+    const interrupted = () => {
+      if (this.state !== 'dialing') return true;
+      if (this.abort) {
+        this.cancelDial();
+        return true;
+      }
+      return false;
+    };
+
     status(` Appel ${number}`);
     if (!quick) {
       await this.audio.dial(number);
-      if (this.abort) return this.cancelDial();
+      if (interrupted()) return false;
       status(` Appel ${number}  sonnerie...`);
       await this.audio.ringback(1);
     } else {
       await wait(500);
     }
-    if (this.abort) return this.cancelDial();
+    if (interrupted()) return false;
 
     const service = this.network.answer(number);
     if (!service) {
       status(` ${number} : pas de réponse`);
       this.audio.hangup();
       await wait(1800);
+      if (this.state !== 'dialing') return false;
       this.setState('idle');
       this.showLocal(null);
       return false;
@@ -204,7 +219,7 @@ export class Minitel extends EventTarget {
     this.term.glitch(quick ? 500 : 2600, 0.01);
     if (!quick) await this.audio.handshake();
     else await wait(600);
-    if (this.abort) return this.cancelDial();
+    if (interrupted()) return false;
 
     this.connect(number, service);
     if (code) this.autoType(code);
@@ -267,7 +282,7 @@ export class Minitel extends EventTarget {
 
   hangup({ silent = false } = {}) {
     if (this.state !== 'connected' && this.state !== 'dialing') return;
-    const summary = { ...this.bill(), number: this.number };
+    const summary = this.state === 'connected' ? { ...this.bill(), number: this.number } : null;
     clearInterval(this.ticker);
     const line = this.line;
     this.line = null;
@@ -277,7 +292,7 @@ export class Minitel extends EventTarget {
     if (!silent) this.audio.hangup();
     this.setState('idle');
     this.summary = summary;
-    this.dispatchEvent(new CustomEvent('hangup', { detail: summary }));
+    this.dispatchEvent(new CustomEvent('hangup', { detail: summary || { seconds: 0, cost: 0, number: this.number } }));
     this.dispatchEvent(new CustomEvent('service', { detail: null }));
     this.showLocal(summary);
   }
