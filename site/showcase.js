@@ -132,7 +132,7 @@ export default {
   code: 'MINITEL',
   name: 'Minitel design system',
   description: 'Présentation du design system',
-  async run(session) {
+  async run(session, context = {}) {
     let index = 0;
     let auto = true;
     for (;;) {
@@ -148,7 +148,10 @@ export default {
       if (event.type === 'char' && /[1-6]/.test(event.char)) index = Number(event.char) - 1;
       else if (event.key === 'SUITE' || event.key === 'ENVOI' || event.key === 'DOWN' || event.key === 'RIGHT') index = (index + 1) % PAGES.length;
       else if (event.key === 'RETOUR' || event.key === 'UP' || event.key === 'LEFT') index = (index - 1 + PAGES.length) % PAGES.length;
-      else if (event.key === 'SOMMAIRE') index = 0;
+      else if (event.key === 'SOMMAIRE') {
+        if (context.kiosk) return; // back to the 3615 kiosk
+        index = 0;
+      }
     }
   },
 };

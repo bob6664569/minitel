@@ -9,5 +9,6 @@ import serpent from './serpent.js';
 import dialogue from './dialogue.js';
 import astro from './astro.js';
 import code from './code.js';
+import showcase from '../../../site/showcase.js';
 
-export const services = [meteo, trains, bourse, serpent, dialogue, astro, code, annuaire];
+export const services = [meteo, trains, bourse, serpent, dialogue, astro, code, showcase, annuaire];

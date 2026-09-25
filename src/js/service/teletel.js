@@ -166,7 +166,7 @@ export function kiosk(network, number = '3615') {
         session.write(new Videotex().status(` ${number} ${service.code}`, { color: 'white' }));
         context.onService?.(service);
         try {
-          await service.run(session, { ...context, network, number });
+          await service.run(session, { ...context, network, number, kiosk: true });
         } catch (failure) {
           if (failure instanceof Disconnected) throw failure;
           console.error(`[${service.code}]`, failure);
