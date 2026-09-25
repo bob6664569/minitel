@@ -189,7 +189,7 @@ function parseQuery(values) {
   } else {
     return { error: ['Indiquez la LOCALITE', 'ou le DEPARTEMENT.'], index: 2 };
   }
-  return { query: { nom: key(nom), rubrique, towns, town, dept: deptCode, place } };
+  return { query: { nom: nom.toUpperCase(), rubrique, towns, town, dept: deptCode, place } };
 }
 
 /* ---------------------------------------------------------------------- */
@@ -197,7 +197,17 @@ function parseQuery(values) {
 /* ---------------------------------------------------------------------- */
 
 const titleOf = (query) => (query.rubrique ? query.rubrique.name : query.nom);
-const nameOf = (entry) => (entry.business ? entry.name : `${entry.name} ${entry.first}`);
+
+/** Shorten a name to `width` cells on a word boundary when possible. */
+function fitWords(text, width) {
+  if (text.length <= width) return text;
+  let out = '';
+  for (const word of text.split(' ')) {
+    if (`${out} ${word}`.trim().length > width) break;
+    out = `${out} ${word}`.trim();
+  }
+  return out || text.slice(0, width);
+}
 const addressOf = (entry, width = 36) => {
   const full = `${entry.street}, ${entry.postcode} ${entry.town.toUpperCase()}`;
   return full.length <= width ? full : `${entry.street}, ${entry.town.toUpperCase()}`;
@@ -218,13 +228,13 @@ function resultsPage(session, query, list, start) {
     if (!e) break;
     const row = 6 + i * 2;
     const bg = i % 2 ? 'blue' : 'black';
-    const phoneWidth = e.phone.length;
-    const nameWidth = 40 - 5 - phoneWidth - 2;
-    const name = e.business ? e.name : e.name;
+    // Name (and first name) on the left, number on the right.
+    const nameWidth = 40 - 5 - e.phone.length - 2;
+    const name = fitWords(e.name, nameWidth);
     p.moveTo(row, 1).bg(bg).color('yellow').invert(true).text(` ${i + 1} `).invert(false)
-      .color('white').text(' ').text(pad(name, Math.min(nameWidth, name.length)));
-    if (!e.business) p.color('cyan').text(pad(` ${e.first}`, Math.max(0, nameWidth - name.length)));
-    else p.text(' '.repeat(Math.max(0, nameWidth - name.length)));
+      .color('white').text(` ${name}`);
+    if (e.business) p.text(' '.repeat(Math.max(0, nameWidth - name.length)));
+    else p.color('cyan').text(pad(` ${e.first}`, Math.max(0, nameWidth - name.length)));
     p.color('yellow').text(` ${e.phone} `);
     p.moveTo(row + 1, 1).bg(bg).color('cyan').text(`    ${pad(addressOf(e), 36)}`);
   }
@@ -247,13 +257,12 @@ function noResultPage(session, query) {
   p.print(13, 2, `à ${query.place}`, { color: 'yellow' });
   p.print(15, 2, "Vérifiez l'orthographe du nom,", { color: 'white' });
   p.print(16, 2, 'ou élargissez la recherche.', { color: 'white' });
-  const hints = [];
   if (query.town) {
+    // Offer the whole department with one key.
     p.panel(18, 2, 19, 38, { bg: 'blue' });
     p.print(18, 4, 'Chercher dans tout le département', { color: 'white', bg: 'blue' });
     p.print(19, 4, `${DEPARTMENTS[query.dept][0]} (${query.dept})`, { color: 'yellow', bg: 'blue' });
     p.key(19, 31, 'SUITE');
-    hints.push(['SUITE', 'tout le département']);
   }
   p.hints(22, [['SOMMAIRE', 'nouvelle recherche']]);
   return p;
@@ -265,7 +274,8 @@ async function results(session, query) {
     const list = query.rubrique ? searchRubrique(query.rubrique, query.towns) : searchName(query.nom, query.towns);
     if (!list.length) {
       session.write(noResultPage(session, query));
-      const k = await session.waitKey(['SUITE', 'SOMMAIRE', 'RETOUR', 'ENVOI', 'GUIDE']);
+      const k = await session.waitKey(['SUITE', 'SOMMAIRE', 'RETOUR', 'ENVOI', 'GUIDE', 'REPETITION']);
+      if (k === 'REPETITION') continue;
       if (k === 'SUITE' && query.town) {
         query = { ...query, towns: townsOf(query.dept), town: null, place: `${DEPARTMENTS[query.dept][0].toUpperCase()} (${query.dept})` };
         continue;

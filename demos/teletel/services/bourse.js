@@ -6,11 +6,11 @@
  *
  * Quotes move every 2.5 s. Live pages only send what changed on screen:
  * each field remembers what it last displayed and rewrites the differing
- * characters only, which keeps the stream well under 1200 baud.
+ * characters only, and every batch waits for the terminal's answer to an
+ * ENQROM request, so updates never pile up, even at 1200 baud.
  */
 import { Page, pad } from '../../../src/js/service/page.js';
 import { Videotex } from '../../../src/js/videotex/writer.js';
-import { ESC } from '../../../src/js/videotex/constants.js';
 import { market, fr, variation, HEADLINES, POINTS, POINT_MS } from './bourse-market.js';
 
 const BAND = 'magenta';
@@ -89,9 +89,9 @@ const PILLS = {
 const direction = (value, reference) => (value > reference + 1e-9 ? 'up' : value < reference - 1e-9 ? 'down' : 'flat');
 
 /**
- * A variation pill at (row, col): a mosaic arrow opens a coloured zone, the
- * 5-character figure follows, a space closes it. 8 cells. With `inline`,
- * it is written at the cursor (the caller is already there).
+ * A variation pill at (row, col): a space, a mosaic arrow opening a coloured
+ * zone, the 5-character figure, and a space closing the zone (9 cells).
+ * With `inline`, it is written at the cursor (the caller is already there).
  */
 function pill(d, v, id, row, col, value, reference, { zone = 'black', width = 5, inline = false } = {}) {
   const dir = direction(value, reference);
@@ -232,7 +232,7 @@ async function live(session, render, update, field, { keys = ['ENVOI', 'RETOUR',
   let sentAt = 0;
   const park = (v) => v.moveTo(field.row, field.col + Math.min(value.length, field.length - 1)).cursor(true);
   const send = (v) => {
-    session.write(park(v).raw(ESC, 0x39, 0x7b));
+    session.write(park(v).requestIdentity());
     waiting = true;
     sentAt = Date.now();
   };
@@ -328,11 +328,8 @@ function boardPage(m, d) {
     p.color('cyan').text(volume);
     d.shown.set(`vol${i}`, volume);
   });
-  p.label(20, 2, 'DEPECHE', { color: 'white', bg: 'red' });
-  d.text(p, 'news', 20, 12, pad(HEADLINES[0], NEWS_WIDTH), { color: 'yellow', force: true });
   p.moveTo(22, 2).color('cyan').invert(true).text(' I ').invert(false).color('white').text(' Indice 36  ')
     .color('cyan').invert(true).text(' P ').invert(false).color('white').text(' Portefeuille');
-  p.hints(23, [['GUIDE', 'aide'], ['SOMMAIRE', 'quitter']]);
   p.print(24, 2, 'N° de valeur, I ou P', { color: 'white' });
   p.color('yellow').text(' .. ');
   p.key(24, 33, 'ENVOI');
@@ -361,7 +358,12 @@ async function board(session, state) {
     lastPrices = m.stocks.map((s) => s.price);
     d.text(v, 'index', 5, 12, pad(fr(m.index), 8, 'right'), { color: 'white' });
     pill(d, v, 'indexVar', 5, 21, m.index, m.indexPrev);
-    if (now - newsAt > 12000) {
+    if (!d.shown.has('news')) {
+      // Secondary furniture follows the table, so the quotes show sooner.
+      v.label(20, 2, 'DEPECHE', { color: 'white', bg: 'red' });
+      d.text(v, 'news', 20, 12, pad(HEADLINES[news], NEWS_WIDTH), { color: 'yellow', force: true });
+      v.hints(23, [['GUIDE', 'aide'], ['SOMMAIRE', 'quitter']]);
+    } else if (now - newsAt > 12000) {
       newsAt = now;
       news = (news + 1) % HEADLINES.length;
       d.text(v, 'news', 20, 12, pad(HEADLINES[news], NEWS_WIDTH), { color: 'yellow' });
@@ -372,6 +374,7 @@ async function board(session, state) {
     const { key, value } = await live(session, () => {
       d.shown.clear();
       flashed = [];
+      lastPrices = m.stocks.map((s) => s.price);
       return boardPage(m, d);
     }, update, { row: 24, col: 24, length: 2, accept: /[0-9IP]/ }, {
       keys: ['ENVOI', 'SUITE', 'SOMMAIRE', 'GUIDE'],
@@ -668,10 +671,13 @@ async function confirm(session, state, s, side, qty) {
   p.print(19, 11, 'ORDRE EXECUTE', { color: 'black', bg: 'green', size: 'tall', flash: true });
   p.print(21, 2, `Liquidités : ${fr(state.cash)} F`, { color: 'yellow' });
   p.hints(23, [['ENVOI', 'portefeuille'], ['RETOUR', 'valeur']]);
-  session.write(p);
-  const key = await session.waitKey(['ENVOI', 'RETOUR', 'SOMMAIRE', 'SUITE']);
-  if (key === 'SOMMAIRE') throw HOME;
-  if (key === 'ENVOI' || key === 'SUITE') await portfolio(session, state);
+  for (;;) {
+    session.write(p);
+    const key = await session.waitKey(['ENVOI', 'RETOUR', 'SOMMAIRE', 'SUITE', 'REPETITION']);
+    if (key === 'SOMMAIRE') throw HOME;
+    if (key === 'ENVOI' || key === 'SUITE') await portfolio(session, state);
+    if (key !== 'REPETITION') return;
+  }
 }
 
 /* ---------------------------------------------------------------------- */
@@ -679,9 +685,10 @@ async function confirm(session, state, s, side, qty) {
 /* ---------------------------------------------------------------------- */
 
 function portfolioView(m, d, state) {
-  const held = () => m.stocks.filter((s) => state.positions[s.code]?.qty).slice(0, 7);
+  const all = () => m.stocks.filter((s) => state.positions[s.code]?.qty);
+  const held = () => all().slice(0, 7);
   const totals = () => {
-    const stocks = held().reduce((sum, s) => sum + s.price * state.positions[s.code].qty, 0);
+    const stocks = all().reduce((sum, s) => sum + s.price * state.positions[s.code].qty, 0);
     return { stocks, total: stocks + state.cash };
   };
   const rowValues = (v, s, i, force = false) => {
@@ -722,6 +729,8 @@ function portfolioView(m, d, state) {
         .color(i % 2 ? 'cyan' : 'white').text(` ${pad(s.short, 12)}${pad(String(h.qty), 5, 'right')}`);
       rowValues(p, s, i, true);
     });
+    const more = all().length - list.length;
+    if (more > 0) p.print(13, 5, `et ${more} autre${more > 1 ? 's' : ''} valeur${more > 1 ? 's' : ''}`, { color: 'cyan' });
     p.print(14, 2, 'Répartition', { color: 'cyan' });
     p.hline(16, { color: BAND, style: 'middle' });
     p.print(17, 2, 'Titres', { color: 'cyan' });
@@ -806,7 +815,7 @@ async function help(session) {
 export default {
   code: 'BOURSE',
   name: 'Bourse',
-  description: 'Cours en direct, INDICE 36, portefeuille',
+  description: 'Cotations en direct, INDICE 36',
   async run(session) {
     const state = session.data.bourse || (session.data.bourse = { cash: START_CASH, positions: {} });
     await board(session, state);

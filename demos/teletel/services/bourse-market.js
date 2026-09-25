@@ -5,6 +5,7 @@
  * resolution and the "INDICE 36" index.
  */
 
+/** FNV-1a hash of a string. */
 export function hash(text) {
   let h = 2166136261;
   for (const ch of String(text)) {
@@ -14,6 +15,7 @@ export function hash(text) {
   return h >>> 0;
 }
 
+/** Mulberry32 PRNG: returns a function giving floats in [0, 1). */
 export function random(seed) {
   let a = seed >>> 0;
   return () => {
@@ -68,10 +70,11 @@ export class Market {
     this.lastStep = now;
     this.lastPoint = now - (now % POINT_MS);
     this.stocks = COMPANIES.map(([code, short, name, sector, ref, shares, vol], index) => {
+      // Yesterday's close, today's opening gap, and the day's own trend.
       const prev = round(ref * (1 + gauss(this.rand) * 0.02));
       const open = round(prev * (1 + gauss(this.rand) * vol * 0.4));
-      const s = { index, code, short, name, sector, shares, vol, prev, open, price: open, high: open, low: open, volume: 0, history: [], trend: gauss(this.rand) * 1.1 };
-      return s;
+      const trend = gauss(this.rand) * 1.1;
+      return { index, code, short, name, sector, shares, vol, prev, open, price: open, high: open, low: open, volume: 0, history: [], trend };
     });
     // Backfill the session so far: POINTS - 1 five-minute points.
     this.start = now - (POINTS - 1) * POINT_MS;

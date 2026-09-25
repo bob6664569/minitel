@@ -207,7 +207,7 @@ function searchPage(message) {
     message.lines.forEach((text, i) => p.print(18 + i, 3, text, { color: i ? 'white' : message.color || ACCENT }));
   } else {
     p.print(18, 3, 'Tapez le nom des gares puis ENVOI.', { color: 'cyan' });
-    p.print(19, 3, 'CORRECTION pour changer date, heure.', { color: 'cyan' });
+    p.print(19, 3, 'Date et heure : tapez par-dessus.', { color: 'cyan' });
   }
   p.hints(22, [['SUITE', 'champ suivant'], ['RETOUR', 'précédent']]);
   p.print(24, 2, 'Rechercher les trains', { color: 'white' });
@@ -617,27 +617,29 @@ async function bookings(session, state) {
   for (;;) {
     const p = new Page().clear().cursor(false);
     header(p, 'MES BILLETS');
-    const list = state.bookings.slice(-6);
+    const list = state.bookings.slice(-5);
     if (!list.length) {
       p.center(10, 'Aucune réservation', { color: ACCENT, size: 'tall' });
       p.center(13, 'Choisissez un train dans les', { color: 'white' });
       p.center(14, 'horaires, puis réservez-le.', { color: 'white' });
       p.hints(24, [['SOMMAIRE', 'accueil']]);
       session.write(p);
-      await session.waitKey(['SOMMAIRE', 'RETOUR', 'ENVOI']);
+      if (await session.waitKey(['SOMMAIRE', 'RETOUR', 'ENVOI', 'REPETITION']) === 'REPETITION') continue;
       return;
     }
+    // Each booking as a small ticket stub.
     list.forEach((b, i) => {
       const row = 6 + i * 3;
-      p.moveTo(row, 2).color(ACCENT).invert(true).text(` ${i + 1} `).invert(false)
-        .color(ACCENT).text(` ${b.ref}  `).color('white').text(`${b.train}  ${shortDate(b.date)}`);
-      p.print(row + 1, 7, `${b.dep} ${b.from.split(' ')[0]} → ${b.to.split(' ')[0]}`.slice(0, 33), { color: 'cyan' });
+      p.panel(row, 3, row + 1, 37, { bg: 'white', shadow: BAND });
+      p.moveTo(row, 3).color(BAND).invert(true).text(` ${i + 1} `).invert(false)
+        .bg('white').text(' ').color('red').text(b.ref).color('black').text(`  ${pad(b.train, 12)}${shortDate(b.date)}`);
+      p.print(row + 1, 8, `${b.dep} ${b.from.split(' ')[0]} → ${b.to.split(' ')[0]}`.slice(0, 29), { color: BAND, bg: 'white' });
     });
     p.hints(22, [['SOMMAIRE', 'accueil']]);
     p.prompt({ label: 'N° du billet', length: 1 });
     if (draw) session.write(p);
     draw = true;
-    const { key, value } = await session.input({ row: 24, col: 15, length: 1, color: 'cyan', accept: /[1-6]/ });
+    const { key, value } = await session.input({ row: 24, col: 15, length: 1, color: 'cyan', accept: /[1-5]/ });
     const b = list[Number(value) - 1];
     if (key === 'SOMMAIRE' || key === 'RETOUR') return;
     if (key === 'GUIDE') await help(session);

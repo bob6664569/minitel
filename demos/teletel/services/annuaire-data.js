@@ -9,6 +9,7 @@
 /* Seeded helpers                                                          */
 /* ---------------------------------------------------------------------- */
 
+/** FNV-1a hash of a string. */
 export function hash(text) {
   let h = 2166136261;
   for (const ch of String(text)) {
@@ -18,6 +19,7 @@ export function hash(text) {
   return h >>> 0;
 }
 
+/** Mulberry32 PRNG: returns a function giving floats in [0, 1). */
 export function random(seed) {
   let a = seed >>> 0;
   return () => {
@@ -32,7 +34,7 @@ export function random(seed) {
 export function key(text) {
   return String(text)
     .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
+    .replace(/[\u0300-\u036f]/g, '')
     .toUpperCase()
     .replace(/\bST(E?)\b/g, 'SAINT$1')
     .replace(/[^A-Z0-9]/g, '');
@@ -302,7 +304,7 @@ function postcodeFor(rand, town) {
 
 /** Does this look like a French surname? (vowels, few rare letters, no triples) */
 function plausible(k) {
-  if (k.length < 3 || !/[AEIOUY]/.test(k) || /(.)\1\1/.test(k) || /[^AEIOUY]{5}/.test(k)) return false;
+  if (k.length < 3 || /[^A-Z]/.test(k) || !/[AEIOUY]/.test(k) || /(.)\1\1/.test(k) || /[^AEIOUY]{5}/.test(k)) return false;
   return (k.match(/[KWXZQ]/g) || []).length <= 1;
 }
 
@@ -312,6 +314,7 @@ function plausible(k) {
  */
 export function searchName(name, towns) {
   const k = key(name);
+  const display = String(name).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(/\s+/g, ' ').trim();
   const rank = SURNAMES.indexOf(k);
   const people = [];
   for (const town of towns) {
@@ -325,7 +328,7 @@ export function searchName(name, towns) {
       const woman = rand() < 0.35;
       const first = pick(rand, woman ? WOMEN : MEN);
       people.push({
-        name: k,
+        name: display,
         first: rand() < 0.12 ? `${first.charAt(0)}.` : first,
         street: `${1 + Math.floor(rand() * 120)}${rand() < 0.06 ? ' bis' : ''} ${pick(rand, STREETS)}`,
         postcode: postcodeFor(rand, town),

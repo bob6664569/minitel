@@ -119,7 +119,7 @@ const DATA = [
 export function stationKey(text) {
   return String(text)
     .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
+    .replace(/[\u0300-\u036f]/g, '')
     .toUpperCase()
     .replace(/\bSAINTE?\b/g, (m) => (m === 'SAINTE' ? 'STE' : 'ST'))
     .replace(/[^A-Z]/g, '');
@@ -146,13 +146,6 @@ export function stationName(station, other) {
   if (terminus === 'Lyon') return 'Paris Gare de Lyon';
   if (terminus === 'Est' || terminus === 'Nord') return `Paris-${terminus}`;
   return terminus ? `Paris ${terminus}` : 'Paris';
-}
-
-/** Short name for tight columns. */
-export function shortName(station, other, width = 18) {
-  const name = stationName(station, other);
-  if (name.length <= width) return name;
-  return station.name.length <= width ? station.name : station.name.slice(0, width);
 }
 
 function levenshtein(a, b) {
@@ -288,12 +281,6 @@ function route(from, to, tgv) {
   const legs = [];
   for (let n = to; n !== from; n = prev.get(n).node) legs.unshift({ from: prev.get(n).node, ...prev.get(n).edge });
   return legs;
-}
-
-/** Rail distance between two stations along the classic network. */
-export function railKm(a, b) {
-  const legs = route(a, b, false);
-  return legs ? legs.reduce((sum, l) => sum + l.km, 0) : Math.round(distance(a, b) * 1.2);
 }
 
 /* ---------------------------------------------------------------------- */
