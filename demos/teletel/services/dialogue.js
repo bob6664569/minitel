@@ -234,7 +234,7 @@ function helpPage({ inRoom = false } = {}) {
  * A two-row input field with server-side echo (rows 3-4), which can hand
  * out the cursor position at any time so that other writes put it back.
  */
-class Composer {
+export class Composer {
   constructor(pseudo) {
     this.col = pseudo.length + 2; // after the pseudo tag and a space
     this.first = 41 - this.col; // characters on the first row
@@ -342,7 +342,7 @@ function wrapFirst(text, first, rest) {
  * Rows of a message, each a function drawing it on a given screen row.
  * kind: 'bot' | 'me' | 'info' | 'event'.
  */
-function renderMessage({ kind, pseudo, text, color = 'cyan' }) {
+export function renderMessage({ kind, pseudo, text, color = 'cyan' }) {
   if (kind === 'info' || kind === 'event') {
     const lines = wrapFirst(`${kind === 'info' ? '>>' : '*'} ${text}`, 38, 38);
     return lines.map((line) => (v, row) => v.moveTo(row, 2).color('green').text(line));

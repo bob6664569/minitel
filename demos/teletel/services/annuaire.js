@@ -2,7 +2,9 @@
  * 3611 ANNUAIRE — the electronic telephone directory, answering 3611
  * directly (no kiosk).
  *
- *   Form: Nom (or Rubrique), Localité (or Département) -> ENVOI
+ *   Search page laid out like the real 3611: NOM or RUBRIQUE, LOCALITE,
+ *   then DEPARTEMENT, ADRESSE and PRENOM to narrow the search down; GUIDE
+ *   on a field offers a list to choose from.
  *   -> list of subscribers (zebra, SUITE / RETOUR) -> card per entry.
  *
  * White pages for people, yellow pages for professions. Subscribers are
@@ -12,7 +14,8 @@
 import { Page, pad, wrap } from '../../../src/js/service/page.js';
 import { Videotex } from '../../../src/js/videotex/writer.js';
 import {
-  DEPARTMENTS, findLocality, findDepartment, findRubrique, townsOf, searchName, searchRubrique, key,
+  DEPARTMENTS, PROFESSIONS, findLocality, findDepartment, departmentLabel, findRubrique, townsOf,
+  searchName, searchRubrique, searchBusiness, isBusinessName, key, plain,
 } from './annuaire-data.js';
 
 const PER_PAGE = 6;
@@ -40,6 +43,28 @@ const HANDSET = [
   '.######.',
   '.######.',
 ];
+
+/* Telephone emblem of the search page, drawn in separated mosaics (7 x 5 cells). */
+const EMBLEM = [
+  '..............',
+  '..##########..',
+  '.############.',
+  '###........###',
+  '##..........##',
+  '.....####.....',
+  '...########...',
+  '..##########..',
+  '.####....####.',
+  '.###..##..###.',
+  '.###.####.###.',
+  '.###..##..###.',
+  '.####....####.',
+  '##############',
+];
+
+/* The big "11" of the directory: two bold ones, 7 x 3 cells together. */
+const ONE = ['..####', '.#####', '######', '..####', '..####', '..####', '..####', '..####', '..####'];
+const ELEVEN = ONE.map((line) => `${line}..${line}`);
 
 /** Band colour: white pages for people, yellow pages for professions. */
 const bandOf = (query) => (query?.rubrique ? 'yellow' : 'white');
@@ -72,21 +97,22 @@ async function help(session) {
   const p = new Page().clear().cursor(false);
   status(p, session);
   header(p, "MODE D'EMPLOI", { size: 'tall' });
-  p.print(6, 2, 'NOM', { color: 'yellow' });
-  p.print(6, 13, "nom de famille ou raison", { color: 'white' });
-  p.print(7, 13, 'sociale : DUPONT, MARTIN', { color: 'white' });
-  p.print(9, 2, 'RUBRIQUE', { color: 'yellow' });
-  p.print(9, 13, 'une profession : PLOMBIER,', { color: 'white' });
-  p.print(10, 13, 'MEDECIN, RESTAURANT...', { color: 'white' });
-  p.print(12, 2, 'LOCALITE', { color: 'yellow' });
-  p.print(12, 13, 'la commune : LYON, BREST', { color: 'white' });
-  p.print(14, 2, 'DEPT.', { color: 'yellow' });
-  p.print(14, 13, 'ou le département : 33', { color: 'white' });
-  const keys = [['SUITE', 'champ suivant'], ['RETOUR', 'champ précédent'], ['ANNULATION', 'effacer le champ'], ['ENVOI', 'lancer la recherche']];
-  keys.forEach(([name, text], i) => {
-    p.key(16 + i, 2, pad(name, 10, 'center'));
-    p.print(16 + i, 16, text, { color: 'cyan' });
-  });
+  const lines = [
+    [6, 'NOM', 'nom de famille, raison sociale'],
+    [7, '', 'ou organisme : MARTIN, MAIRIE'],
+    [9, 'RUBRIQUE', 'une profession : PLOMBIERS,'],
+    [10, '', 'MEDECINS, TAXIS...'],
+    [12, 'LOCALITE', 'la commune : DIJON, BREST'],
+    [13, 'DEPARTEMENT', 'numéro ou nom : 21, COTE D OR'],
+    [15, 'ADRESSE', 'pour préciser : une rue'],
+    [16, 'PRENOM', "le prénom de l'abonné"],
+  ];
+  for (const [row, label, text] of lines) {
+    if (label) p.print(row, 2, label, { color: 'yellow' });
+    p.print(row, 15, text, { color: 'white' });
+  }
+  p.print(18, 2, 'GUIDE sur RUBRIQUE, LOCALITE ou', { color: 'cyan' });
+  p.print(19, 2, 'DEPARTEMENT : choisir dans une liste.', { color: 'cyan' });
   p.panel(21, 2, 22, 38, { bg: 'blue' });
   p.print(21, 4, 'Gratuit les 3 premières minutes,', { color: 'white', bg: 'blue' });
   p.print(22, 4, 'puis 0,12 F la minute.', { color: 'white', bg: 'blue' });
@@ -96,54 +122,66 @@ async function help(session) {
 }
 
 /* ---------------------------------------------------------------------- */
-/* Search form                                                             */
+/* Search page                                                             */
 /* ---------------------------------------------------------------------- */
 
+/* Fields start after the labels' colon, in column 12. */
+const FIELD_COL = 13;
+const FIELD_WIDTH = 27;
 const FORM = [
-  { name: 'nom', row: 9, col: 15, length: 24, uppercase: true },
-  { name: 'rubrique', row: 11, col: 15, length: 24, uppercase: true },
-  { name: 'localite', row: 14, col: 15, length: 24, uppercase: true },
-  { name: 'dept', row: 16, col: 15, length: 2, uppercase: true, accept: /[0-9AB]/i },
+  { name: 'nom', row: 5, label: 'NOM:' },
+  { name: 'rubrique', row: 7, label: 'RUBRIQUE:', rows: 2 },
+  { name: 'localite', row: 10, label: 'LOCALITE:', rows: 2 },
+  { name: 'dept', row: 13, label: 'DEPARTEMENT:' },
+  { name: 'adresse', row: 14, label: 'ADRESSE:' },
+  { name: 'prenom', row: 15, label: 'PRENOM:' },
+].map((f) => ({ ...f, col: FIELD_COL, length: FIELD_WIDTH * (f.rows || 1), width: FIELD_WIDTH, uppercase: true }));
+
+const EMPTY = Object.freeze({ nom: '', rubrique: '', localite: '', dept: '', adresse: '', prenom: '' });
+
+/* Key legend, bottom right: what each key does, then the key. */
+const LEGEND = [
+  ['ligne suivante', 'Suite'],
+  ['ligne précédente', 'Retour'],
+  ['effacer', 'Correc.'],
+  ['choisir dans une liste', 'Guide'],
+  ['obtenir la réponse', 'Envoi'],
 ];
 
 function homePage(session, message) {
   const p = new Page().clear().cursor(false);
   status(p, session);
-  p.band(1, { bg: 'white', rows: 5 });
-  p.bigText(2, 2, '3611', { color: 'blue', background: 'white' });
-  p.art(2, 15, PHONE, { ink: 'black', background: 'white' });
-  p.print(3, 24, 'ANNUAIRE', { color: 'black', bg: 'white', size: 'double' });
-  p.print(5, 17, 'E L E C T R O N I Q U E', { color: 'red', bg: 'white' });
-  p.hline(6, { color: 'white', style: 'top' });
-  p.label(7, 2, 'GRATUIT', { color: 'white', bg: 'red' });
-  p.print(7, 12, 'les 3 premières minutes', { color: 'yellow' });
+  p.art(1, 1, EMBLEM, { ink: 'white', separated: true });
+  p.band(1, { bg: 'blue', rows: 3, col: 13, width: 28 });
+  ['RECHERCHE', 'PAR NOM', 'OU PAR RUBRIQUE'].forEach((text, i) => p.print(1 + i, 14, text, { color: 'white', bg: 'blue' }));
+  p.art(1, 33, ELEVEN, { ink: 'white', background: 'blue' });
 
-  p.print(9, 2, 'NOM', { color: 'cyan' });
-  p.print(10, 2, 'ou raison sociale', { color: 'blue' });
-  p.print(11, 2, 'ou RUBRIQUE', { color: 'cyan' });
-  p.print(12, 2, 'profession', { color: 'blue' });
-  p.hline(13, { col: 2, width: 37, color: 'blue', style: 'middle' });
-  p.print(14, 2, 'LOCALITE', { color: 'cyan' });
-  p.print(16, 2, 'ou DEPT.', { color: 'cyan' });
-  p.print(16, 19, 'numéro (ex. 69)', { color: 'blue' });
+  for (const f of FORM) p.right(f.row, FIELD_COL - 1, f.label, { color: 'cyan' });
+  p.print(6, 9, 'ou', { color: 'white' });
+  p.print(12, FIELD_COL, 'vous pouvez préciser', { color: 'white' });
+  p.moveTo(16, 1).color('white').text('_'.repeat(40));
+  LEGEND.forEach(([text, name], i) => {
+    p.right(17 + i, 31, text, { color: 'white' });
+    // Underlined inverse video: a dark line under each key separates the boxes.
+    p.moveTo(17 + i, 33).invert(true).underline(true).text(pad(` ${name}`, 8));
+  });
 
   if (message) {
-    p.panel(18, 2, 19 + message.lines.length - 1, 38, { bg: message.bg || 'red' });
-    message.lines.forEach((text, i) => p.print(18 + i, 4, text, { color: 'white', bg: message.bg || 'red' }));
+    const top = 25 - message.lines.length;
+    p.panel(top, 2, 24, 38, { bg: 'red' });
+    message.lines.forEach((text, i) => p.print(top + i, 4, text, { color: 'white', bg: 'red' }));
   } else {
-    p.print(18, 2, 'Exemples :', { color: 'white' });
-    p.print(18, 13, 'MARTIN', { color: 'yellow' });
-    p.print(18, 21, 'à', { color: 'white' });
-    p.print(18, 23, 'LYON', { color: 'yellow' });
-    p.print(19, 13, 'PLOMBIER', { color: 'yellow' });
-    p.print(19, 22, 'dans le', { color: 'white' });
-    p.print(19, 30, '33', { color: 'yellow' });
+    p.print(23, 2, 'Exemples : MARTIN à LYON,', { color: 'blue' });
+    p.print(24, 2, 'OFFICE DU TOURISME à DIJON', { color: 'blue' });
   }
-  p.hints(22, [['SUITE', 'champ suivant'], ['GUIDE', 'aide']]);
-  p.print(24, 2, 'Lancez la recherche', { color: 'white' });
-  p.key(24, 33, 'ENVOI');
   return p;
 }
+
+/** Street words that say nothing about the street itself. */
+const STREET_WORDS = new Set(['RUE', 'R', 'AVENUE', 'AV', 'AVE', 'BOULEVARD', 'BD', 'PLACE', 'PL', 'CHEMIN', 'CH', 'IMPASSE',
+  'IMP', 'ALLEE', 'ALL', 'QUAI', 'ROUTE', 'RTE', 'COURS', 'SQUARE', 'SQ', 'DE', 'DU', 'DES', 'LA', 'LE', 'LES', 'D', 'L', 'BIS']);
+
+const addressWords = (text) => plain(text).split(/[^A-Z0-9]+/).filter((w) => w && !STREET_WORDS.has(w) && !/^\d+$/.test(w));
 
 /** Turn the form values into a query, or an error message. */
 function parseQuery(values) {
@@ -156,40 +194,153 @@ function parseQuery(values) {
     if (!found.rubrique) {
       const lines = [`Rubrique inconnue : ${rub}`.slice(0, 34)];
       if (found.suggestions.length) lines.push(`Essayez ${found.suggestions.map((r) => r.name).join(', ')}`.slice(0, 34));
-      else lines.push('Ex. PLOMBIER, MEDECIN, TAXI');
+      else lines.push('GUIDE : liste des rubriques');
       return { error: lines, index: 1 };
     }
     rubrique = found.rubrique;
   } else if (key(nom).length < 2) {
     return { error: ['Nom trop court : 2 lettres minimum.'], index: 0 };
   }
+
   const loc = values.localite.trim();
   const dept = values.dept.trim();
+  let deptCode = null;
+  if (dept) {
+    deptCode = findDepartment(dept);
+    if (!deptCode) return { error: [`Département inconnu : ${dept}`.slice(0, 34), 'GUIDE : liste des départements'], index: 3 };
+  }
   let towns;
   let place;
   let town = null;
-  let deptCode = null;
   if (loc) {
     const found = findLocality(loc);
     if (!found.town) {
       const lines = [`Localité inconnue : ${loc}`.slice(0, 34)];
-      if (found.suggestions.length) lines.push(...wrap(`Voulez-vous dire ${found.suggestions.map((t) => t.name.toUpperCase()).join(', ')} ?`, 34).slice(0, 2));
+      if (found.suggestions.length) lines.push(...wrap(`Voulez-vous dire ${found.suggestions.map((t) => plain(t.name)).join(', ')} ?`, 34).slice(0, 2));
       else lines.push('Précisez le département.');
       return { error: lines, index: 2 };
     }
     town = found.town;
+    if (deptCode && town.dept !== deptCode) {
+      // The same name may exist in the department that was typed.
+      const k = key(loc);
+      const local = townsOf(deptCode).find((t) => t.key.startsWith(k));
+      if (!local) return { error: [`${plain(town.name)} n'est pas dans le ${deptCode}.`.slice(0, 34)], index: 3 };
+      town = local;
+    }
     towns = [town];
     deptCode = town.dept;
-    place = `${town.name.toUpperCase()} (${town.dept})`;
-  } else if (dept) {
-    deptCode = findDepartment(dept);
-    if (!deptCode) return { error: [`Département inconnu : ${dept}`], index: 3 };
+    place = `${plain(town.name)} (${town.dept})`;
+  } else if (deptCode) {
     towns = townsOf(deptCode);
-    place = `${DEPARTMENTS[deptCode][0].toUpperCase()} (${deptCode})`;
+    place = `${departmentLabel(deptCode)} (${deptCode})`;
   } else {
     return { error: ['Indiquez la LOCALITE', 'ou le DEPARTEMENT.'], index: 2 };
   }
-  return { query: { nom: nom.toUpperCase(), rubrique, towns, town, dept: deptCode, place } };
+  return {
+    query: {
+      nom: plain(nom), rubrique, towns, town, dept: deptCode, place,
+      prenom: key(values.prenom), adresse: addressWords(values.adresse),
+    },
+  };
+}
+
+/** Directory entries for a query, narrowed by first name and street. */
+function find(query) {
+  let list;
+  if (query.rubrique) list = searchRubrique(query.rubrique, query.towns);
+  else if (isBusinessName(query.nom)) list = searchBusiness(query.nom, query.towns);
+  else list = searchName(query.nom, query.towns);
+  if (query.prenom) list = list.filter((e) => (e.business ? key(e.name).includes(query.prenom) : key(e.first).startsWith(query.prenom)));
+  if (query.adresse.length) list = list.filter((e) => query.adresse.every((word) => key(e.street).includes(word)));
+  return list;
+}
+
+/* ---------------------------------------------------------------------- */
+/* GUIDE: choose in a list                                                 */
+/* ---------------------------------------------------------------------- */
+
+const LIST_ROWS = 16;
+
+/** Department codes in directory order: 01 ... 19, 2A, 2B, 21 ... */
+const deptOrder = (code) => (code === '2A' ? 20.1 : code === '2B' ? 20.2 : Number(code));
+
+function listPage(session, title, items, start, codeWidth) {
+  const p = new Page().clear().cursor(false);
+  status(p, session);
+  header(p, title, { size: 'tall' });
+  const perPage = LIST_ROWS * 2;
+  const pages = Math.ceil(items.length / perPage);
+  if (pages > 1) p.right(5, 39, `${Math.floor(start / perPage) + 1}/${pages}`, { color: 'white' });
+  const shown = items.slice(start, start + perPage);
+  const perColumn = Math.min(LIST_ROWS, Math.ceil(shown.length / 2));
+  const labelWidth = 18 - codeWidth - 1;
+  shown.forEach((item, i) => {
+    const row = 6 + (i % perColumn);
+    const col = i < perColumn ? 2 : 21;
+    const label = item.label.length > labelWidth ? `${item.label.slice(0, labelWidth - 1)}.` : item.label;
+    p.print(row, col, pad(item.code, codeWidth, 'right'), { color: 'yellow' });
+    p.print(row, col + codeWidth + 1, label, { color: 'white' });
+  });
+  const hints = [];
+  if (start + perPage < items.length) hints.push(['SUITE', 'page suivante']);
+  hints.push(['RETOUR', start ? 'page précédente' : 'formulaire']);
+  p.hints(22, hints);
+  p.prompt({ label: 'Votre choix', length: codeWidth, fieldColor: 'yellow' });
+  return p;
+}
+
+/**
+ * A list to choose from. `pick(value)` turns what was typed into an item.
+ * Returns the chosen item, or null to go back to the form.
+ */
+async function choose(session, { title, items, pick }) {
+  const codeWidth = Math.max(...items.map((item) => item.code.length));
+  const perPage = LIST_ROWS * 2;
+  let start = 0;
+  let draw = true;
+  for (;;) {
+    const page = listPage(session, title, items, start, codeWidth);
+    if (draw) session.write(page);
+    draw = true;
+    const { key: k, value } = await session.input({ ...page.field, color: 'yellow', uppercase: true, accept: /[0-9AB]/i });
+    if (k === 'SOMMAIRE' || (k === 'RETOUR' && !start)) return null;
+    if (k === 'RETOUR') start -= perPage;
+    else if (k === 'SUITE' && start + perPage < items.length) start += perPage;
+    else if (k === 'ENVOI' && pick(value)) return pick(value);
+    else if (k !== 'REPETITION') {
+      session.write(new Videotex().bell());
+      draw = false;
+    }
+  }
+}
+
+/**
+ * GUIDE on a field of the search page: rubriques, departments or the
+ * towns of the department; the help page elsewhere. Returns { name, value }
+ * for the field to fill, or null.
+ */
+async function guide(session, field, values) {
+  if (field === 'rubrique') {
+    const items = PROFESSIONS.map((r, i) => ({ code: String(i + 1), label: r.name, value: r.name }));
+    const item = await choose(session, { title: 'RUBRIQUES', items, pick: (v) => items[Number(v) - 1] });
+    return item && { name: 'rubrique', value: item.value };
+  }
+  const dept = findDepartment(values.dept);
+  if (field === 'localite' && dept) {
+    const items = townsOf(dept).map((t, i) => ({ code: String(i + 1), label: t.name, value: plain(t.name) }));
+    const item = await choose(session, { title: `COMMUNES (${dept})`, items, pick: (v) => items[Number(v) - 1] });
+    return item && { name: 'localite', value: item.value };
+  }
+  if (field === 'dept' || field === 'localite') {
+    const items = Object.keys(DEPARTMENTS)
+      .sort((a, b) => deptOrder(a) - deptOrder(b))
+      .map((code) => ({ code, label: DEPARTMENTS[code][0], value: departmentLabel(code) }));
+    const item = await choose(session, { title: 'DEPARTEMENTS', items, pick: (v) => items.find((it) => it.code === findDepartment(v)) });
+    return item && { name: 'dept', value: item.value };
+  }
+  await help(session);
+  return null;
 }
 
 /* ---------------------------------------------------------------------- */
@@ -271,13 +422,13 @@ function noResultPage(session, query) {
 /** Results loop. Returns 'new' for a new search, 'back' to refine the form. */
 async function results(session, query) {
   for (;;) {
-    const list = query.rubrique ? searchRubrique(query.rubrique, query.towns) : searchName(query.nom, query.towns);
+    const list = find(query);
     if (!list.length) {
       session.write(noResultPage(session, query));
       const k = await session.waitKey(['SUITE', 'SOMMAIRE', 'RETOUR', 'ENVOI', 'GUIDE', 'REPETITION']);
       if (k === 'REPETITION') continue;
       if (k === 'SUITE' && query.town) {
-        query = { ...query, towns: townsOf(query.dept), town: null, place: `${DEPARTMENTS[query.dept][0].toUpperCase()} (${query.dept})` };
+        query = { ...query, towns: townsOf(query.dept), town: null, place: `${departmentLabel(query.dept)} (${query.dept})` };
         continue;
       }
       if (k === 'GUIDE') {
@@ -379,7 +530,7 @@ export default {
   name: 'Annuaire électronique',
   description: "L'annuaire de tous les abonnés au téléphone",
   async run(session) {
-    const values = { nom: '', rubrique: '', localite: '', dept: '' };
+    const values = { ...EMPTY };
     let message = null;
     let index = 0;
     // A direct service: returning would hang up, so only CONNEXION FIN ends it.
@@ -391,12 +542,16 @@ export default {
       index = result.index;
       message = null;
       if (result.key === 'SOMMAIRE') {
-        Object.assign(values, { nom: '', rubrique: '', localite: '', dept: '' });
+        Object.assign(values, EMPTY);
         index = 0;
         continue;
       }
       if (result.key === 'GUIDE') {
-        await help(session);
+        const chosen = await guide(session, FORM[index].name, values);
+        if (chosen) {
+          values[chosen.name] = chosen.value;
+          index = FORM.findIndex((f) => f.name === chosen.name);
+        }
         continue;
       }
       if (result.key !== 'ENVOI') continue;
@@ -408,7 +563,7 @@ export default {
         continue;
       }
       if (await results(session, parsed.query) === 'new') {
-        Object.assign(values, { nom: '', rubrique: '', localite: '', dept: '' });
+        Object.assign(values, EMPTY);
         index = 0;
       }
     }

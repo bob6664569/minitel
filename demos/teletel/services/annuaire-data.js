@@ -179,12 +179,29 @@ export function findLocality(text) {
   return { suggestions: closest(text, LOCALITIES) };
 }
 
-/** Normalise a typed department: '6' -> '06', '2a' -> '2A'. */
+/** A typed department, by number or by name: '6' -> '06', '2a' -> '2A', 'COTE D OR' -> '21'. */
 export function findDepartment(text) {
   let code = String(text).trim().toUpperCase();
   if (/^\d$/.test(code)) code = `0${code}`;
   if (code === '20') code = '2A';
-  return DEPARTMENTS[code] ? code : null;
+  if (DEPARTMENTS[code]) return code;
+  const k = key(text);
+  if (k.length < 3) return null;
+  const entries = Object.entries(DEPARTMENTS);
+  const exact = entries.find(([, [name]]) => key(name) === k);
+  if (exact) return exact[0];
+  const prefix = entries.filter(([, [name]]) => key(name).startsWith(k));
+  return prefix.length === 1 ? prefix[0][0] : null;
+}
+
+/** A department name the way the directory writes it: 'Côte-d'Or' -> 'COTE D OR'. */
+export function departmentLabel(code) {
+  return plain(DEPARTMENTS[code][0]).replace(/[-']/g, ' ');
+}
+
+/** Uppercase without accents, spaces kept: 'Office du Tourisme' -> 'OFFICE DU TOURISME'. */
+export function plain(text) {
+  return String(text).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(/\s+/g, ' ').trim();
 }
 
 /* ---------------------------------------------------------------------- */
@@ -340,6 +357,47 @@ export function searchName(name, towns) {
     }
   }
   return people.sort((a, b) => a.first.localeCompare(b.first, 'fr') || a.town.localeCompare(b.town, 'fr'));
+}
+
+/* First words that make a NOM a company or an office rather than a surname. */
+const BUSINESS_WORDS = new Set([
+  'OFFICE', 'MAIRIE', 'HOTEL', 'RESTAURANT', 'SOCIETE', 'STE', 'ETS', 'ETABLISSEMENTS', 'GARAGE', 'PHARMACIE', 'BANQUE',
+  'CREDIT', 'CAISSE', 'POSTE', 'GARE', 'ECOLE', 'LYCEE', 'COLLEGE', 'HOPITAL', 'CLINIQUE', 'CABINET', 'CAFE', 'BAR',
+  'CINEMA', 'THEATRE', 'MUSEE', 'PREFECTURE', 'COMMISSARIAT', 'GENDARMERIE', 'SYNDICAT', 'CENTRE', 'MAISON', 'AGENCE',
+  'IMPRIMERIE', 'LIBRAIRIE', 'BOULANGERIE', 'CHAMBRE', 'ASSOCIATION', 'CLUB', 'PISCINE', 'BIBLIOTHEQUE', 'STADE',
+]);
+
+/* Offices every town has; other companies exist in some towns only. */
+const PUBLIC_WORDS = new Set(['OFFICE', 'MAIRIE', 'POSTE', 'GARE', 'GENDARMERIE', 'COMMISSARIAT', 'ECOLE', 'SYNDICAT', 'PISCINE', 'BIBLIOTHEQUE', 'STADE']);
+
+/** Does a NOM name a company or an office ("OFFICE DU TOURISME") rather than a person? */
+export function isBusinessName(name) {
+  const words = plain(name).split(/[^A-Z0-9]+/).filter(Boolean);
+  return BUSINESS_WORDS.has(words[0]) || words.length > 2;
+}
+
+/** A company or an office named `name` in the given towns. */
+export function searchBusiness(name, towns) {
+  const display = plain(name);
+  const first = display.split(/[^A-Z0-9]+/)[0];
+  const list = [];
+  for (const town of towns.slice(0, 12)) {
+    const rand = random(hash(`${key(name)}|${town.key}`));
+    if (towns.length > 1 && !PUBLIC_WORDS.has(first) && rand() < 0.5) continue;
+    const street = first === 'GARE' ? 'pl de la Gare' : first === 'MAIRIE' ? "pl de l'Hôtel de Ville" : pick(rand, STREETS);
+    list.push({
+      name: display,
+      first: '',
+      business: true,
+      street: `${1 + Math.floor(rand() * 40)} ${street}`,
+      postcode: postcodeFor(rand, town),
+      town: town.name,
+      dept: town.dept,
+      phone: phoneNumber(rand, town.dept),
+      activity: null,
+    });
+  }
+  return list;
 }
 
 /** Businesses of a rubrique in the given towns. */

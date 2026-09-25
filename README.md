@@ -87,18 +87,19 @@ await device.dial('3615', { code: 'HELLO' });
 
 | 3615 TRAINS | 3615 BOURSE | 3611 |
 | --- | --- | --- |
-| ![3615 TRAINS: the live departures board of the Paris stations](assets/screenshots/teletel-trains.png) | ![3615 BOURSE: live quotes, prices that just moved in inverse video](assets/screenshots/teletel-bourse.png) | ![3611: the electronic directory listing the Martins of Lyon](assets/screenshots/teletel-annuaire.png) |
-| **3615 SERPENT** | **3615 DIALOGUE** | **3615 CODE** |
-| ![3615 SERPENT: the title screen with a mosaic snake and apple](assets/screenshots/teletel-serpent.png) | ![3615 DIALOGUE: a chat room with coloured pseudonyms](assets/screenshots/teletel-dialogue.png) | ![3615 CODE: the test card](assets/screenshots/teletel-code.png) |
+| ![3615 TRAINS: the live departures board of the Paris stations](assets/screenshots/teletel-trains.png) | ![3615 BOURSE: live quotes, prices that just moved in inverse video](assets/screenshots/teletel-bourse.png) | ![3611: the search page of the electronic directory, looking for the tourist office of Dijon](assets/screenshots/teletel-annuaire.png) |
+| **3615 SERPENT** | **3615 ROSE** | **3615 CODE** |
+| ![3615 SERPENT: the title screen with a mosaic snake and apple](assets/screenshots/teletel-serpent.png) | ![3615 ROSE: the home page of 3615 ULLA with a new name](assets/screenshots/teletel-rose.png) | ![3615 CODE: the test card](assets/screenshots/teletel-code.png) |
 
 | Number / code | Service |
 | --- | --- |
 | 3615 METEO | Weather with a mosaic map of France |
 | 3615 TRAINS | Timetables over 75 stations, route diagrams, bookings and a live departures board |
-| 3611 | The electronic directory: people and trades by town, free for three minutes |
+| 3611 | The electronic directory and its famous search page: people, trades and offices by town or department, free for three minutes |
 | 3615 BOURSE | Live quotes redrawn character by character, charts, orders and a portfolio |
 | 3615 SERPENT | Snake at sextant resolution |
 | 3615 DIALOGUE | Chat rooms of 1990, with regulars who answer back |
+| 3615 ROSE | "Dialogue et rencontres": the home page of 3615 ULLA with a new name, people online with their CV, private conversations, a mailbox and messages flashing on row 0 |
 | 3615 ASTRO | Horoscope |
 | 3615 CODE | The test card, character sets and mosaics: the design system inside the Minitel |
 | 3615 MINITEL | The attract mode of the landing page |
@@ -121,10 +122,8 @@ The font is drawn as ASCII art in `src/js/font/glyphs.js`; `tools/build-font.mjs
 
 ## Credits
 
-A tribute to the Minitel (1982–2012). The font, components and emulator are original work; the protocol follows the *Spécifications Techniques d'Utilisation du Minitel* (STUM1B). No ROM, archive page or trademark artwork is included.
+A tribute to the Minitel (1982–2012). The font, components and emulator are original work; the protocol follows the *Spécifications Techniques d'Utilisation du Minitel* (STUM1B). No ROM is included. The one archive page is the home page of 3615 ULLA, redrawn from a screenshot for 3615 ROSE with its logo replaced.
 
 ## License
 
-[MIT](LICENSE), fonts included.
-
-[![Faire un don en Bitcoin](https://fr.cryptobadges.io/badge/big/1EW7pcZb384G8z7uBp29gdYBDg2Z4wAbAJ?showBalance=true)](https://fr.cryptobadges.io/donate/1EW7pcZb384G8z7uBp29gdYBDg2Z4wAbAJ)
+[MIT](LICENSE), fonts included, except the picture in [`demos/teletel/services/rose-art.js`](demos/teletel/services/rose-art.js): it reproduces the home page of 3615 ULLA, which belongs to its authors.
