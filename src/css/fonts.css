@@ -1,0 +1,39 @@
+/*
+ * Minitel web fonts.
+ *
+ * One family, three widths, mirroring the Videotex character sizes:
+ *   font-stretch: 100%  normal cell            (8x10)
+ *   font-stretch: 200%  double width           (16x10)
+ *   font-stretch: 50%   double height, used with font-size: 2em (8x20)
+ * Double size is simply the normal face at font-size: 2em.
+ *
+ * "Minitel Separated" only holds the disjoint mosaic characters; stack it in
+ * front of "Minitel" to switch mosaics to their separated shape.
+ */
+@font-face {
+  font-family: "Minitel";
+  src: url("../fonts/minitel.woff2") format("woff2"), url("../fonts/minitel.ttf") format("truetype");
+  font-stretch: 100%;
+  font-display: block;
+}
+
+@font-face {
+  font-family: "Minitel";
+  src: url("../fonts/minitel-wide.woff2") format("woff2"), url("../fonts/minitel-wide.ttf") format("truetype");
+  font-stretch: 200%;
+  font-display: block;
+}
+
+@font-face {
+  font-family: "Minitel";
+  src: url("../fonts/minitel-tall.woff2") format("woff2"), url("../fonts/minitel-tall.ttf") format("truetype");
+  font-stretch: 50%;
+  font-display: block;
+}
+
+@font-face {
+  font-family: "Minitel Separated";
+  src: url("../fonts/minitel-separated.woff2") format("woff2"), url("../fonts/minitel-separated.ttf") format("truetype");
+  unicode-range: U+0020, U+00A0, U+2588, U+258C, U+2590, U+1FB00-1FB3B;
+  font-display: block;
+}
