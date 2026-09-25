@@ -98,6 +98,8 @@ export class InputParser {
   }
 }
 
+const isIdentity = (event) => event.type === 'response' && event.kind === 'identity';
+
 /** Keys that end an input field by default. */
 const FIELD_EXIT_KEYS = new Set(['ENVOI', 'SUITE', 'RETOUR', 'SOMMAIRE', 'GUIDE', 'REPETITION', 'CONNEXION_FIN']);
 
@@ -137,9 +139,21 @@ export class Session extends EventTarget {
 
   /** Ask the terminal for its identification (ENQROM). */
   async identify(timeout = 1500) {
-    this.write(new Videotex().raw(ESC, 0x39, 0x7b));
-    const event = await this.next({ timeout, filter: (e) => e.type === 'response' && e.kind === 'identity' });
+    this.write(new Videotex().requestIdentity());
+    const event = await this.next({ timeout, filter: isIdentity });
     return event ? event.value : null;
+  }
+
+  /**
+   * Resolves once the terminal has displayed everything sent so far: it
+   * answers an identity request only after the bytes queued before it, so
+   * animations and live pages go at the pace of the line, whatever its
+   * speed. Other input stays queued. Resolves false after `timeout` ms
+   * without an answer.
+   */
+  async sync(timeout = 8000) {
+    this.write(new Videotex().requestIdentity());
+    return (await this.next({ timeout, filter: isIdentity })) !== null;
   }
 
   /* ---------------------------------------------------------------- */
@@ -241,18 +255,31 @@ export class Session extends EventTarget {
     const at = (i) => new Videotex().moveTo(...place(i)).color(f.color);
     const start = f.redraw === false ? new Videotex() : this.drawField(f, value);
     this.write(start.moveTo(...place(Math.min(value.length, f.length - 1))).cursor(true));
+    let edited = false;
     try {
       for (;;) {
         const event = await this.next();
         if (event.type === 'char') {
           let ch = f.uppercase ? event.char.toUpperCase() : event.char;
-          if ((f.accept && !f.accept.test(ch)) || value.length >= f.length) {
+          if (f.accept && !f.accept.test(ch)) {
+            this.write(new Videotex().bell());
+            continue;
+          }
+          // A full field starts over at the first character typed in it, so
+          // a prefilled date or hour can be typed over.
+          const echo = new Videotex();
+          if (!edited && value.length >= f.length) {
+            value = '';
+            echo.append(this.drawField(f, value));
+          }
+          edited = true;
+          if (value.length >= f.length) {
             this.write(new Videotex().bell());
             continue;
           }
           value += ch;
           if (f.secret) ch = '*';
-          const echo = at(value.length - 1).text(ch);
+          echo.append(at(value.length - 1).text(ch));
           // Keep the cursor inside the field: on the last cell once full, and
           // at the start of the next row when the echo ended a row.
           if (value.length >= f.length) echo.moveTo(...place(f.length - 1));
@@ -260,10 +287,12 @@ export class Session extends EventTarget {
           this.write(echo.cursor(true));
         } else if (event.type === 'key') {
           if (event.key === 'CORRECTION' || event.key === 'LEFT') {
+            edited = true;
             if (!value.length) continue;
             value = value.slice(0, -1);
             this.write(at(value.length).text(f.placeholder || ' ').moveTo(...place(value.length)).cursor(true));
           } else if (event.key === 'ANNULATION') {
+            edited = true;
             value = '';
             this.write(this.drawField(f, value).moveTo(f.row, f.col).cursor(true));
           } else if (exitKeys.has(event.key)) {

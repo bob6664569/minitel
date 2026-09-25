@@ -7,6 +7,7 @@ import { Screen } from '../src/js/videotex/screen.js';
 import { Decoder } from '../src/js/videotex/decoder.js';
 import { keyBytes } from '../src/js/terminal/keyboard.js';
 import { Teletel } from '../src/js/service/teletel.js';
+import { sextantBits as sextantBitsOf } from '../src/js/font/glyphs.js';
 
 /** A terminal end that decodes what it receives into a Screen. */
 function terminal() {
@@ -175,4 +176,34 @@ test('double-height text on a background opens the zone on both rows', () => {
 test('writer CSI helpers', () => {
   const bytes = [...new Page().insertLines(2).deleteChars(1).cursorBy(-1, 3).requestCursor().bytes()];
   assert.deepEqual(bytes, [0x1b, 0x5b, 0x32, 0x4c, 0x1b, 0x5b, 0x31, 0x50, 0x1b, 0x5b, 0x31, 0x41, 0x1b, 0x5b, 0x33, 0x43, 0x1b, 0x61]);
+});
+
+test('typing into a full prefilled field starts it over', async () => {
+  const t = terminal();
+  const session = new Session(t.server);
+  const pending = session.input({ row: 8, col: 10, length: 2, value: '25', accept: /\d/ });
+  await t.tick();
+  await t.type('0');
+  assert.equal(t.screen.rowText(8).slice(9, 11), '0.');
+  await t.type('7');
+  await t.key('ENVOI');
+  assert.equal((await pending).value, '07');
+});
+
+test('sync() resolves once the terminal has answered, keeping typed keys', async () => {
+  const t = terminal();
+  const decoder = new Decoder(new Screen(), { onResponse: (bytes) => t.end.send(bytes) });
+  t.end.addEventListener('data', (e) => decoder.write(e.detail));
+  const session = new Session(t.server);
+  await t.type('A');
+  assert.equal(await session.sync(1000), true);
+  assert.deepEqual(await session.next({ timeout: 10 }), { type: 'char', char: 'A' });
+});
+
+test('charts can start their scale above zero', () => {
+  const screen = new Screen();
+  new Decoder(screen).write(new Page().clear().chart(5, 3, [100, 110, 120], { height: 1, min: 100, max: 120 }).bytes());
+  const row = screen.resolveRow(5);
+  assert.equal(sextantBitsOf(row[2].char), 0, 'the minimum is an empty column');
+  assert.equal(sextantBitsOf(row[4].char), 63, 'the maximum is a full column');
 });

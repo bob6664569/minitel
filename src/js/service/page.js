@@ -354,11 +354,14 @@ export class Page extends Videotex {
 
   /**
    * Vertical bar chart with 1/3-cell resolution. Two bars per cell column
-   * when `pair` is true (each bar is half a cell wide).
+   * when `pair` is true (each bar is half a cell wide). The scale runs from
+   * `min` (0) to `max` (the largest value): raise `min` to show the
+   * variations of a price rather than its level.
    */
-  chart(row, col, values, { height = 6, color = 'green', bg = 'black', max, pair = false, zone = 'black' } = {}) {
-    const top = max ?? Math.max(...values, 1);
-    const levels = values.map((v) => Math.round((Math.max(0, v) / top) * height * 3));
+  chart(row, col, values, { height = 6, color = 'green', bg = 'black', min = 0, max, pair = false, zone = 'black' } = {}) {
+    const top = max ?? Math.max(...values, min + 1);
+    const span = top - min || 1;
+    const levels = values.map((v) => Math.round((Math.max(0, v - min) / span) * height * 3));
     const columns = pair ? Math.ceil(levels.length / 2) : levels.length;
     for (let r = 0; r < height; r++) {
       const cellRow = row + r; // row is the top of the chart

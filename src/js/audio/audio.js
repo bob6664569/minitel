@@ -16,6 +16,9 @@ const DTMF = {
 
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+/** True during a user gesture, or when the browser cannot tell. */
+const activated = () => globalThis.navigator?.userActivation?.isActive ?? true;
+
 export class MinitelAudio {
   constructor({ volume = 0.35, muted = false } = {}) {
     this.volumeValue = volume;
@@ -47,9 +50,19 @@ export class MinitelAudio {
    * (browsers keep resume() pending until the page has been interacted with).
    */
   unlock() {
-    if (this.mutedValue) return;
+    if (this.mutedValue || !activated()) return;
     const ctx = this.ctx;
     if (ctx && ctx.state !== 'running') ctx.resume().catch(() => {});
+  }
+
+  /**
+   * The context sounds can be scheduled on, or null. Nothing is queued on a
+   * context the browser keeps suspended: it would all play at once later.
+   */
+  get live() {
+    if (this.mutedValue || !this.context) return null;
+    // A context started by the current gesture is still 'suspended' for a moment.
+    return this.context.state === 'running' || activated() ? this.context : null;
   }
 
   get muted() { return this.mutedValue; }
@@ -89,8 +102,7 @@ export class MinitelAudio {
    * @param {number} duration seconds
    */
   tone(freqs, duration, { gain = 0.2, type = 'sine', when = 0, attack = 0.005, release = 0.01, phone = true } = {}) {
-    if (this.mutedValue) return;
-    const ctx = this.ctx;
+    const ctx = this.live;
     if (!ctx) return;
     const start = ctx.currentTime + when;
     const env = ctx.createGain();
@@ -111,9 +123,8 @@ export class MinitelAudio {
 
   /** Play a generated buffer of samples (mono, -1..1). */
   buffer(samples, { gain = 0.2, when = 0, phone = true } = {}) {
-    if (this.mutedValue) return;
-    const ctx = this.ctx;
-    if (!ctx) return;
+    const ctx = this.live;
+    if (!ctx || !samples.length) return;
     const buffer = ctx.createBuffer(1, samples.length, ctx.sampleRate);
     buffer.copyToChannel(samples, 0);
     const source = this.track(ctx.createBufferSource());
@@ -158,7 +169,7 @@ export class MinitelAudio {
    * 2100 Hz space), mixed with the 75-baud return channel (390/450 Hz).
    */
   fsk(bits, { baud = 1200, mark = 1300, space = 2100, back = true } = {}) {
-    const ctx = this.mutedValue ? null : this.ctx;
+    const ctx = this.live;
     if (!ctx) return new Float32Array(0);
     const rate = ctx.sampleRate;
     const perBit = rate / baud;
@@ -201,9 +212,8 @@ export class MinitelAudio {
    * the data already playing so it follows the modem's pace.
    */
   data(bytes, baud = 1200) {
-    if (this.mutedValue || !baud) return;
-    const ctx = this.ctx;
-    if (!ctx) return;
+    const ctx = this.live;
+    if (!ctx || !baud) return;
     const bits = [];
     for (const byte of bytes) {
       let parity = 0;
@@ -227,8 +237,7 @@ export class MinitelAudio {
 
   /** Mechanical key click. */
   click() {
-    if (this.mutedValue) return;
-    const ctx = this.ctx;
+    const ctx = this.live;
     if (!ctx) return;
     const n = Math.floor(ctx.sampleRate * 0.012);
     const samples = new Float32Array(n);

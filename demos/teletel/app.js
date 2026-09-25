@@ -71,7 +71,6 @@ function apply() {
   device.setAttribute('baud', baud.value);
   device.setAttribute('effects', crt.checked ? 'on' : 'off');
   device.audio.muted = !sound.checked;
-  device.audio.unlock();
   device.minitel.dataSound = dataSound.checked;
   store.set('data', dataSound.checked ? 'on' : 'off');
   store.set('model', model.value);
@@ -80,7 +79,12 @@ function apply() {
   store.set('sound', sound.checked ? 'on' : 'off');
   store.set('crt', crt.checked ? 'on' : 'off');
 }
-for (const input of [model, theme, baud, sound, crt, dataSound]) input.addEventListener('change', apply);
+for (const input of [model, theme, baud, sound, crt, dataSound]) {
+  input.addEventListener('change', () => {
+    apply();
+    device.audio.unlock();
+  });
+}
 apply();
 
 /* ---------------------------------------------------------------------- */

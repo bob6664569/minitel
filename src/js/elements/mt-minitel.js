@@ -60,9 +60,11 @@ export class MinitelDeviceElement extends HTMLElement {
     this.updateModel();
     this.powerButton.addEventListener('click', () => this.togglePower());
     this.audio = this.audio || new MinitelAudio();
-    // Any interaction unlocks audio (autoplay policies).
+    // Any interaction unlocks audio (autoplay policies): a mouse press, the
+    // end of a touch, a key.
     const unlock = () => this.audio.unlock();
     this.addEventListener('pointerdown', unlock);
+    this.addEventListener('pointerup', unlock);
     this.addEventListener('keydown', unlock);
     if (this.pendingNetwork) this.network = this.pendingNetwork;
   }
