@@ -9,6 +9,10 @@
 - **Mosaic Studio:** [`demos/studio/`](demos/studio/) — pictures and live webcam to Videotex mosaics, `.vdt` player.
 - **Documentation:** [`docs/`](docs/) — every component with its markup, custom elements, JavaScript API.
 
+| 3615 METEO in the Télétel simulator | Mosaic Studio | Documentation |
+| --- | --- | --- |
+| ![A Minitel 1B showing the mosaic weather map of France](assets/screenshots/teletel-meteo.png) | ![Mosaic Studio converting a sunset to Videotex mosaics](assets/screenshots/studio.png) | ![The documentation, built with the design system itself](assets/screenshots/docs.png) |
+
 ## What's inside
 
 | Layer | Files | What you get |
