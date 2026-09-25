@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mosaic Studio — minitel</title>
+  <meta name="description" content="Transformez n'importe quelle image, ou votre webcam en direct, en mosaïques Vidéotex. Export .vdt, HTML et PNG.">
+  <meta name="theme-color" content="#0d0f12">
+  <link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../../src/css/minitel.css">
+  <link rel="stylesheet" href="studio.css">
+</head>
+<body class="st mt" data-mt-theme="color">
+  <header class="st-top">
+    <a class="st-top__back" href="../../index.html">&larr; minitel</a>
+    <span class="st-top__title">MOSAIC STUDIO</span>
+    <ul class="mt-tabs st-tabs" role="tablist">
+      <li><button type="button" role="tab" aria-selected="true" aria-controls="panel-studio" id="tab-studio">Studio</button></li>
+      <li><button type="button" role="tab" aria-selected="false" aria-controls="panel-player" id="tab-player">Lecteur VDT</button></li>
+    </ul>
+  </header>
+
+  <main class="st-main">
+    <section class="st-screen" aria-label="Écran Minitel">
+      <div class="st-bezel">
+        <mt-terminal id="term" theme="color" baud="0"></mt-terminal>
+      </div>
+      <div class="st-drop" id="drop" hidden><span class="mt-key">Déposez l'image ou le fichier .vdt</span></div>
+      <p class="st-stats" id="stats" aria-live="polite"></p>
+    </section>
+
+    <section class="st-panel" id="panel-studio" role="tabpanel" aria-labelledby="tab-studio">
+      <div class="st-group">
+        <h2 class="st-group__title">Source</h2>
+        <div class="mt-cluster">
+          <label class="mt-button st-file">Choisir une image<input type="file" id="file" accept="image/*" hidden></label>
+          <button type="button" class="mt-button mt-button--accent" id="webcam">Webcam</button>
+        </div>
+        <div class="mt-cluster st-samples" id="samples"></div>
+      </div>
+
+      <div class="st-group">
+        <h2 class="st-group__title">Rendu</h2>
+        <label class="st-row"><span>Écran</span>
+          <select class="mt-select" id="palette"><option value="color">Couleur</option><option value="mono">Noir &amp; blanc</option></select>
+        </label>
+        <label class="st-row"><span>Trame</span>
+          <select class="mt-select" id="dither"><option value="ordered">Trame ordonnée</option><option value="floyd-steinberg">Diffusion</option><option value="none">Aucune</option></select>
+        </label>
+        <label class="st-row"><span>Cadrage</span>
+          <select class="mt-select" id="fit"><option value="cover">Remplir</option><option value="contain">Contenir</option></select>
+        </label>
+        <label class="st-row"><span>Hauteur</span>
+          <select class="mt-select" id="rows"><option value="24">24 rangées</option><option value="18">18 rangées</option><option value="12">12 rangées</option></select>
+        </label>
+        <label class="st-row"><span>Luminosité</span><input class="mt-range" type="range" id="brightness" min="50" max="160" value="100" style="--len: 12"></label>
+        <label class="st-row"><span>Contraste</span><input class="mt-range" type="range" id="contrast" min="50" max="200" value="115" style="--len: 12"></label>
+        <label class="st-row"><span>Saturation</span><input class="mt-range" type="range" id="saturate" min="0" max="250" value="140" style="--len: 12"></label>
+        <label class="mt-check"><input type="checkbox" id="separated"> Mosaïques disjointes</label>
+        <label class="st-row st-row--caption"><span>Légende</span><input class="mt-input" id="caption" maxlength="38" style="--len: 20" placeholder="3615 MOSAIQUE"></label>
+      </div>
+
+      <div class="st-group">
+        <h2 class="st-group__title">Transmission</h2>
+        <label class="st-row"><span>Modem</span>
+          <select class="mt-select" id="baud"><option value="1200">1200 bauds</option><option value="4800">4800 bauds</option><option value="9600">9600 bauds</option><option value="0">Instantané</option></select>
+        </label>
+        <div class="mt-cluster">
+          <button type="button" class="mt-button mt-button--band" id="send">Transmettre</button>
+          <button type="button" class="mt-button mt-button--ghost" id="download-vdt">.vdt</button>
+          <button type="button" class="mt-button mt-button--ghost" id="download-png">.png</button>
+          <button type="button" class="mt-button mt-button--ghost" id="copy-html">HTML</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="st-panel" id="panel-player" role="tabpanel" aria-labelledby="tab-player" hidden>
+      <div class="st-group">
+        <h2 class="st-group__title">Lecteur de pages Vidéotex</h2>
+        <p class="st-note">Ouvrez un fichier <code>.vdt</code> (flux Vidéotex brut, tel qu'envoyé à un Minitel) : il est rejoué à la vitesse du modem.</p>
+        <div class="mt-cluster">
+          <label class="mt-button st-file">Ouvrir un .vdt<input type="file" id="vdt-file" accept=".vdt,.bin,application/octet-stream" hidden></label>
+          <button type="button" class="mt-button mt-button--accent" id="vdt-sample">Exemple</button>
+        </div>
+        <label class="st-row"><span>Modem</span>
+          <select class="mt-select" id="vdt-baud"><option value="1200">1200 bauds</option><option value="300">300 bauds</option><option value="4800">4800 bauds</option><option value="9600">9600 bauds</option><option value="0">Instantané</option></select>
+        </label>
+        <div class="mt-progress" id="vdt-progress" style="--value: 0"></div>
+        <p class="st-note" id="vdt-info">Aucun fichier.</p>
+        <div class="mt-cluster">
+          <button type="button" class="mt-button" id="vdt-play" disabled>Rejouer</button>
+          <button type="button" class="mt-button mt-button--ghost" id="vdt-skip" disabled>Tout afficher</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <video id="video" playsinline muted hidden></video>
+  <script type="module" src="studio.js"></script>
+</body>
+</html>

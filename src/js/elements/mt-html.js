@@ -106,7 +106,7 @@ export class MinitelMosaicElement extends HTMLElement {
     const pixels = sampleImage(image, cols, rows, { fit: this.getAttribute('fit') || 'cover' });
     const cells = imageToMosaic(pixels, {
       palette: this.getAttribute('palette') || 'color',
-      dither: this.getAttribute('dither') || 'floyd-steinberg',
+      dither: this.getAttribute('dither') || 'ordered',
     });
     this.innerHTML = cellsToHTML(cells);
     if (!this.hasAttribute('aria-label')) this.setAttribute('aria-label', this.getAttribute('alt') || 'Image en mosaïque');

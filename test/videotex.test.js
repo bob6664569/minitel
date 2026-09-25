@@ -159,3 +159,10 @@ test('flash, conceal and reveal', () => {
   screen.revealed = true;
   assert.equal(screen.resolveRow(1)[2].conceal, false);
 });
+
+test('an empty mosaic cell is blank, not a full block', async () => {
+  const { sextantBits, sextantRows } = await import('../src/js/font/glyphs.js');
+  assert.equal(sextantBits(' '), 0);
+  assert.ok(sextantRows(sextantBits(' ')).every((row) => row === 0));
+  for (let bits = 0; bits < 64; bits++) assert.equal(sextantBits(sextantChar(bits)), bits);
+});

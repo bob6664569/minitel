@@ -418,6 +418,41 @@
   background: var(--mt-bg);
 }
 
+/* Range: a dotted track and an inverse-video cell as the thumb */
+.mt-range {
+  appearance: none;
+  width: calc(var(--len, 16) * var(--mt-col));
+  height: var(--mt-row);
+  margin: 0;
+  background: linear-gradient(90deg, var(--mt-dot) 0 calc(var(--mt-col) / 4), transparent 0) calc(var(--mt-col) / 4) calc(var(--mt-row) * 0.6) / var(--mt-col) calc(var(--mt-row) / 5) repeat-x;
+  cursor: pointer;
+}
+
+.mt-range::-webkit-slider-thumb {
+  appearance: none;
+  width: var(--mt-col);
+  height: var(--mt-row);
+  background: var(--mt-highlight);
+  border: 0;
+  border-radius: 0;
+}
+
+.mt-range::-moz-range-thumb {
+  width: var(--mt-col);
+  height: var(--mt-row);
+  background: var(--mt-highlight);
+  border: 0;
+  border-radius: 0;
+}
+
+.mt-range::-moz-range-track {
+  background: transparent;
+}
+
+.mt-range:focus-visible {
+  outline: calc(var(--mt-row) / 10) solid var(--mt-focus);
+}
+
 /* Prompt line: "Votre choix .. puis ENVOI" */
 .mt-prompt {
   display: flex;

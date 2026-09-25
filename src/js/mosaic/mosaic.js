@@ -101,10 +101,10 @@ const BAYER4 = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5].map((v) =>
  * @param {{width:number,height:number,data:Uint8ClampedArray}} image sub-pixel image (2 px per column, 3 per row)
  * @param {object} [options]
  * @param {'color'|'mono'|Array} [options.palette='color']
- * @param {'none'|'ordered'|'floyd-steinberg'} [options.dither='floyd-steinberg']
+ * @param {'none'|'ordered'|'floyd-steinberg'} [options.dither='ordered']
  * @param {number} [options.strength=1] dithering strength
  */
-export function imageToMosaic(image, { palette = 'color', dither = 'floyd-steinberg', strength = 1 } = {}) {
+export function imageToMosaic(image, { palette = 'color', dither = 'ordered', strength = 1 } = {}) {
   const pal = Array.isArray(palette) ? palette : palette === 'mono' ? monoPalette([255, 255, 255]) : COLOR_PALETTE;
   const { width, height, data } = image;
   const cols = Math.ceil(width / 2);
@@ -304,7 +304,7 @@ export function cellsToHTML({ cols, rows, cells }) {
 }
 
 /** Scale an image source into an ImageData at sub-pixel resolution (browser only). */
-export function sampleImage(source, cols, rows, { fit = 'cover', adjust } = {}) {
+export function sampleImage(source, cols, rows, { fit = 'cover', adjust, mirror = false } = {}) {
   const width = cols * 2;
   const height = rows * 3;
   const canvas = document.createElement('canvas');
@@ -324,6 +324,10 @@ export function sampleImage(source, cols, rows, { fit = 'cover', adjust } = {}) 
   ctx.fillRect(0, 0, width, height);
   if (adjust) ctx.filter = adjust;
   ctx.imageSmoothingQuality = 'high';
+  if (mirror) {
+    ctx.translate(width, 0);
+    ctx.scale(-1, 1);
+  }
   ctx.drawImage(source, (width - dw) / 2, (height - dh) / 2, dw, dh);
   return ctx.getImageData(0, 0, width, height);
 }

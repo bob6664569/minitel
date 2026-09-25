@@ -421,6 +421,7 @@ export function sextantChar(bits) {
 /** Sextant pattern of a Unicode character, or -1 when it is not a mosaic. */
 export function sextantBits(ch) {
   const cp = ch.codePointAt(0);
+  if (cp === 0x20 || cp === 0xa0) return 0;
   if (cp === 0x2588) return 63;
   if (cp === 0x258c) return 21;
   if (cp === 0x2590) return 42;
