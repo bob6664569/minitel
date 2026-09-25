@@ -1,0 +1,286 @@
+/* Télétel demo page */
+
+html {
+  background: #0b0c0e;
+}
+
+body.tt {
+  margin: 0;
+  min-height: 100vh;
+  color: #d8d2c4;
+  background:
+    radial-gradient(70% 55% at 42% 18%, rgba(255, 214, 160, 0.10), transparent 70%),
+    radial-gradient(120% 90% at 50% 120%, #1e1a15 0%, transparent 60%),
+    linear-gradient(180deg, #121417 0%, #0b0c0e 100%);
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  overflow-x: hidden;
+}
+
+/* Top bar ---------------------------------------------------------------- */
+
+.tt-top {
+  --mt-font-size: 20px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 12px clamp(16px, 3vw, 32px);
+  background: rgba(8, 9, 11, 0.8);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.tt-top__back {
+  color: var(--mt-accent);
+  text-decoration: none;
+  white-space: pre;
+}
+
+.tt-top__back:hover {
+  color: var(--mt-bg);
+  background: var(--mt-accent);
+}
+
+.tt-top__title {
+  font-stretch: 200%;
+  color: var(--mt-highlight);
+  letter-spacing: 0;
+}
+
+.tt-top__meter {
+  margin-left: auto;
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  padding: 6px 12px;
+  border-radius: 4px;
+  background: #140605;
+  box-shadow: inset 0 0 0 1px rgba(255, 90, 60, 0.25), inset 0 2px 8px rgba(0, 0, 0, 0.8);
+  color: #ff5a3c;
+  text-shadow: 0 0 6px rgba(255, 90, 60, 0.8);
+  white-space: pre;
+}
+
+.tt-meter__label {
+  color: rgba(255, 90, 60, 0.55);
+  text-shadow: none;
+}
+
+/* Stage ------------------------------------------------------------------ */
+
+.tt-stage {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 400px);
+  gap: clamp(24px, 4vw, 56px);
+  align-items: start;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: clamp(24px, 4vw, 48px) clamp(16px, 3vw, 32px) 64px;
+}
+
+.tt-desk {
+  position: relative;
+  padding-bottom: 40px;
+}
+
+/* Desk surface and reflection under the device */
+.tt-desk::after {
+  content: "";
+  position: absolute;
+  left: -10%;
+  right: -10%;
+  bottom: 0;
+  height: 22%;
+  z-index: -1;
+  background: radial-gradient(50% 60% at 50% 0%, rgba(0, 0, 0, 0.6), transparent 70%);
+  filter: blur(10px);
+}
+
+.tt-device-wrap {
+  position: relative;
+  container-type: inline-size;
+  max-width: 920px;
+  margin: 0 auto;
+}
+
+.tt-power-hint {
+  --mt-font-size: 20px;
+  position: absolute;
+  top: 37.5cqi;
+  left: 50%;
+  translate: -50% -50%;
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  padding: 18px 24px;
+  border: 0;
+  background: rgba(0, 0, 0, 0.35);
+  color: var(--mt-fg);
+  cursor: pointer;
+  font-family: var(--mt-font);
+  animation: tt-pulse 2.4s ease-in-out infinite;
+}
+
+.tt-power-hint .mt-key {
+  font-size: 2em;
+}
+
+.tt-power-hint:hover .mt-key {
+  background: var(--mt-highlight);
+}
+
+.tt-power-hint[hidden] {
+  display: none;
+}
+
+@keyframes tt-pulse {
+  50% { opacity: 0.65; }
+}
+
+/* Side panel: the printed service guide ----------------------------------- */
+
+.tt-side {
+  --mt-font-size: 15px;
+  display: grid;
+  gap: 24px;
+  background: transparent;
+}
+
+.tt-card {
+  padding: 20px 20px 16px;
+  background: var(--mt-bg);
+  color: var(--mt-fg);
+  box-shadow: 8px 8px 0 rgba(0, 0, 0, 0.35), 0 20px 40px rgba(0, 0, 0, 0.35);
+}
+
+.tt-card__title {
+  margin: 0 0 var(--mt-row);
+  padding: 0 var(--mt-col);
+  font-size: 1em;
+  font-stretch: 100%;
+  color: var(--mt-bg);
+  background: var(--mt-blue);
+  text-transform: uppercase;
+}
+
+.tt-card__lead {
+  margin: 0 0 var(--mt-row);
+  white-space: normal;
+  line-height: 1.2;
+}
+
+.tt-directory {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 2px;
+}
+
+.tt-directory > li::before {
+  content: none;
+}
+
+.tt-directory__item {
+  appearance: none;
+  display: grid;
+  grid-template-columns: 5ch 10ch minmax(0, 1fr);
+  gap: 1ch;
+  align-items: baseline;
+  width: 100%;
+  padding: 4px 6px;
+  border: 0;
+  font: inherit;
+  text-align: left;
+  color: var(--mt-fg);
+  background: transparent;
+  cursor: pointer;
+}
+
+.tt-directory__item:hover,
+.tt-directory__item:focus-visible {
+  color: var(--mt-bg);
+  background: var(--mt-fg);
+  outline: none;
+}
+
+.tt-directory__number {
+  color: var(--mt-red);
+}
+
+.tt-directory__item:hover .tt-directory__number,
+.tt-directory__item:hover .tt-directory__desc {
+  color: inherit;
+}
+
+.tt-directory__code {
+  white-space: pre;
+}
+
+.tt-directory__desc {
+  color: var(--mt-cyan);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tt-settings {
+  display: grid;
+  gap: 12px;
+}
+
+.tt-setting {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1ch;
+}
+
+.tt-setting > span {
+  color: var(--mt-blue);
+}
+
+.tt-keys {
+  margin: 0;
+}
+
+.tt-keys li > :last-child {
+  color: var(--mt-red);
+}
+
+/* Narrow screens ---------------------------------------------------------- */
+
+@media (max-width: 1100px) {
+  .tt-stage {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .tt-side {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    align-items: start;
+  }
+}
+
+@media (max-width: 560px) {
+  .tt-top {
+    gap: 12px;
+    --mt-font-size: 15px;
+  }
+
+  .tt-top__title {
+    display: none;
+  }
+
+  .tt-side,
+  .tt-power-hint {
+    --mt-font-size: 15px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tt-power-hint {
+    animation: none;
+  }
+}

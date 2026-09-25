@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Télétel — Minitel simulator</title>
+  <meta name="description" content="Composez 3615, attendez le sifflement, tapez le code du service : un Minitel complet dans le navigateur.">
+  <meta name="theme-color" content="#0d0f12">
+  <link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../../src/css/minitel.css">
+  <link rel="stylesheet" href="teletel.css">
+</head>
+<body class="tt">
+  <header class="tt-top mt">
+    <a class="tt-top__back" href="../../index.html">&larr; minitel</a>
+    <span class="tt-top__title">TELETEL</span>
+    <span class="tt-top__meter" aria-live="polite">
+      <span class="tt-meter__label">Compteur</span>
+      <span class="tt-meter__time" id="meter-time">00:00</span>
+      <span class="tt-meter__cost" id="meter-cost">0,00 F</span>
+    </span>
+  </header>
+
+  <main class="tt-stage">
+    <div class="tt-desk">
+      <div class="tt-device-wrap">
+        <mt-minitel id="minitel" model="1b" theme="mono"></mt-minitel>
+        <button class="tt-power-hint mt" id="power-hint" type="button">
+          <span class="mt-key">Allumer</span>
+          <span class="tt-power-hint__text">le Minitel</span>
+        </button>
+      </div>
+    </div>
+
+    <aside class="tt-side mt" data-mt-theme="paper" aria-label="Annuaire des services">
+      <section class="tt-card">
+        <h2 class="tt-card__title">Annuaire des services</h2>
+        <p class="tt-card__lead">Cliquez pour composer, ou tapez le numéro sur le Minitel puis <kbd class="mt-key">Connexion Fin</kbd>.</p>
+        <ol class="tt-directory" id="directory"></ol>
+      </section>
+
+      <section class="tt-card">
+        <h2 class="tt-card__title">Réglages</h2>
+        <div class="tt-settings">
+          <label class="tt-setting"><span>Modèle</span>
+            <select class="mt-select" id="set-model"><option value="1b">Minitel 1B</option><option value="2">Minitel 2</option></select>
+          </label>
+          <label class="tt-setting"><span>Écran</span>
+            <select class="mt-select" id="set-theme"><option value="mono">Noir &amp; blanc</option><option value="color">Couleur</option><option value="amber">Ambre</option><option value="green">Vert</option></select>
+          </label>
+          <label class="tt-setting"><span>Modem</span>
+            <select class="mt-select" id="set-baud"><option value="1200">1200 bauds</option><option value="4800">4800 bauds</option><option value="9600">9600 bauds</option><option value="0">Instantané</option></select>
+          </label>
+          <label class="mt-check"><input type="checkbox" id="set-sound" checked> Son du modem</label>
+          <label class="mt-check"><input type="checkbox" id="set-crt" checked> Effets cathodiques</label>
+        </div>
+      </section>
+
+      <section class="tt-card">
+        <h2 class="tt-card__title">Clavier</h2>
+        <ul class="mt-leaders tt-keys" id="keys"></ul>
+      </section>
+    </aside>
+  </main>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

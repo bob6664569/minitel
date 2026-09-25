@@ -1,0 +1,130 @@
+/*
+ * Utilities: the Videotex attributes as classes.
+ */
+
+/* Foreground colours (ESC 0x40..0x47) */
+.mt-fg-black { color: var(--mt-black); }
+.mt-fg-red { color: var(--mt-red); }
+.mt-fg-green { color: var(--mt-green); }
+.mt-fg-yellow { color: var(--mt-yellow); }
+.mt-fg-blue { color: var(--mt-blue); }
+.mt-fg-magenta { color: var(--mt-magenta); }
+.mt-fg-cyan { color: var(--mt-cyan); }
+.mt-fg-white { color: var(--mt-white); }
+
+/* Background colours (ESC 0x50..0x57) */
+.mt-bg-black { background-color: var(--mt-black); }
+.mt-bg-red { background-color: var(--mt-red); }
+.mt-bg-green { background-color: var(--mt-green); }
+.mt-bg-yellow { background-color: var(--mt-yellow); }
+.mt-bg-blue { background-color: var(--mt-blue); }
+.mt-bg-magenta { background-color: var(--mt-magenta); }
+.mt-bg-cyan { background-color: var(--mt-cyan); }
+.mt-bg-white { background-color: var(--mt-white); }
+
+/* Bands take the readable text colour of their background */
+.mt-band.mt-bg-black, .mt-panel.mt-bg-black { --mt-band-bg: var(--mt-black); color: var(--mt-on-black); }
+.mt-band.mt-bg-red, .mt-panel.mt-bg-red { --mt-band-bg: var(--mt-red); color: var(--mt-on-red); }
+.mt-band.mt-bg-green, .mt-panel.mt-bg-green { --mt-band-bg: var(--mt-green); color: var(--mt-on-green); }
+.mt-band.mt-bg-yellow, .mt-panel.mt-bg-yellow { --mt-band-bg: var(--mt-yellow); color: var(--mt-on-yellow); }
+.mt-band.mt-bg-blue, .mt-panel.mt-bg-blue { --mt-band-bg: var(--mt-blue); color: var(--mt-on-blue); }
+.mt-band.mt-bg-magenta, .mt-panel.mt-bg-magenta { --mt-band-bg: var(--mt-magenta); color: var(--mt-on-magenta); }
+.mt-band.mt-bg-cyan, .mt-panel.mt-bg-cyan { --mt-band-bg: var(--mt-cyan); color: var(--mt-on-cyan); }
+.mt-band.mt-bg-white, .mt-panel.mt-bg-white { --mt-band-bg: var(--mt-white); color: var(--mt-on-white); }
+
+/* Sizes (ESC 0x4C..0x4F) */
+.mt-normal { font-size: 1em; font-stretch: 100%; }
+.mt-dw { font-stretch: 200%; } /* double width */
+.mt-dh { font-size: 2em; font-stretch: 50%; } /* double height */
+.mt-ds { font-size: 2em; font-stretch: 100%; } /* double size */
+
+/* Inverse video (ESC 0x5D) */
+.mt-inverse {
+  color: var(--mt-inverse-fg, var(--mt-bg));
+  background-color: var(--mt-inverse-bg, var(--mt-fg));
+}
+
+/* Underline — one font pixel on the bottom row (ESC 0x5A) */
+.mt-underline {
+  text-decoration: underline;
+  text-decoration-thickness: calc(var(--mt-row) / 10);
+  text-underline-offset: calc(var(--mt-row) * 0.2 - var(--mt-row) / 10);
+  text-decoration-skip-ink: none;
+}
+
+/* Flash (ESC 0x48): the Minitel keeps characters lit two thirds of the time */
+.mt-blink {
+  animation: mt-blink var(--mt-blink) steps(1, end) infinite;
+}
+
+@keyframes mt-blink {
+  66.6% { opacity: 0; }
+}
+
+/* Conceal (ESC 0x58): hidden until revealed (hover, focus, or .mt-revealed) */
+.mt-conceal {
+  color: transparent;
+  text-shadow: none;
+  transition: none;
+}
+
+.mt-conceal:hover,
+.mt-conceal:focus,
+.mt-revealed .mt-conceal {
+  color: inherit;
+}
+
+/* Separated (disjoint) mosaics */
+.mt-sep {
+  font-family: "Minitel Separated", var(--mt-font);
+}
+
+/* Glow of the phosphor on text */
+.mt-glow {
+  text-shadow:
+    0 0 calc(var(--mt-row) * 0.12 * var(--mt-glow)) color-mix(in srgb, currentColor 75%, transparent),
+    0 0 calc(var(--mt-row) * 0.6 * var(--mt-glow)) color-mix(in srgb, currentColor 35%, transparent);
+}
+
+/* Layout helpers counted in cells */
+.mt-center { text-align: center; }
+.mt-right { text-align: right; }
+.mt-upper { text-transform: uppercase; }
+.mt-pre { white-space: pre; }
+.mt-wrap { white-space: normal; }
+.mt-nowrap { white-space: nowrap; }
+.mt-muted { color: var(--mt-muted); }
+.mt-accent { color: var(--mt-accent); }
+.mt-highlight { color: var(--mt-highlight); }
+.mt-full { grid-column: 1 / -1; }
+
+.mt-mt-0 { margin-top: 0; }
+.mt-mt-1 { margin-top: var(--mt-row); }
+.mt-mt-2 { margin-top: calc(var(--mt-row) * 2); }
+.mt-mb-0 { margin-bottom: 0; }
+.mt-mb-1 { margin-bottom: var(--mt-row); }
+.mt-mb-2 { margin-bottom: calc(var(--mt-row) * 2); }
+.mt-px-1 { padding-inline: var(--mt-col); }
+.mt-px-2 { padding-inline: calc(var(--mt-col) * 2); }
+.mt-py-1 { padding-block: var(--mt-row); }
+
+.mt-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mt-blink,
+  .mt-cursor,
+  .mt-spinner::before,
+  .mt-ticker > * {
+    animation: none;
+  }
+}

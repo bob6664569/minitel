@@ -1,0 +1,822 @@
+/*
+ * Components. Every size is a multiple of a cell (--mt-col x --mt-row) or
+ * of a mosaic sextant (half a cell wide, a third of a row tall).
+ */
+
+/* --------------------------------------------------------------------- */
+/* Status row (ligne 0)                                                   */
+/* --------------------------------------------------------------------- */
+
+.mt-status {
+  display: flex;
+  align-items: baseline;
+  gap: var(--mt-col);
+  min-height: var(--mt-row);
+  color: var(--mt-fg);
+  white-space: pre;
+  overflow: hidden;
+}
+
+.mt-status__end {
+  margin-left: auto;
+}
+
+/* Connection indicator: F offline, C connected */
+.mt-status__indicator {
+  margin-left: auto;
+  width: var(--mt-col);
+  text-align: center;
+}
+
+/* --------------------------------------------------------------------- */
+/* Bands and headers                                                      */
+/* --------------------------------------------------------------------- */
+
+.mt-band {
+  --mt-band-bg: var(--mt-band);
+  display: flex;
+  align-items: baseline;
+  gap: var(--mt-col);
+  min-height: var(--mt-row);
+  padding: 0 var(--mt-col);
+  color: var(--mt-on-band);
+  background: var(--mt-band-bg);
+  white-space: pre;
+}
+
+.mt-band > .mt-band__end {
+  margin-left: auto;
+}
+
+/* Service header: 3-row band, double-size title, code top right */
+.mt-header {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: var(--mt-row) calc(var(--mt-row) * 2);
+  align-items: end;
+  padding: 0 var(--mt-col);
+  color: var(--mt-on-band);
+  background: var(--mt-band);
+  box-shadow: 0 calc(var(--mt-row) / 3) 0 0 color-mix(in srgb, var(--mt-band) 45%, var(--mt-bg));
+  margin-bottom: calc(var(--mt-row) * 4 / 3);
+}
+
+.mt-header__code {
+  grid-column: 2;
+  grid-row: 1;
+  align-self: start;
+  color: var(--mt-highlight);
+  white-space: pre;
+}
+
+.mt-header__title {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  margin: 0;
+  font-size: 2em;
+  font-stretch: 100%;
+  line-height: 1;
+  color: inherit;
+  text-transform: uppercase;
+  white-space: pre;
+  overflow: hidden;
+}
+
+.mt-header__subtitle {
+  margin: 0 0 var(--mt-row);
+  color: var(--mt-highlight);
+}
+
+/* --------------------------------------------------------------------- */
+/* Key caps and buttons                                                   */
+/* --------------------------------------------------------------------- */
+
+/* <kbd class="mt-key">Envoi</kbd> — a Minitel key name in inverse video */
+.mt-key {
+  display: inline-block;
+  padding: 0 var(--mt-col);
+  color: var(--mt-bg);
+  background: var(--mt-fg);
+  text-transform: uppercase;
+  white-space: pre;
+  font: inherit;
+  line-height: 1;
+}
+
+.mt-key--accent {
+  background: var(--mt-accent);
+}
+
+.mt-button {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mt-col);
+  min-height: var(--mt-row);
+  margin: 0;
+  padding: 0 var(--mt-col);
+  border: 0;
+  border-radius: 0;
+  font: inherit;
+  line-height: 1;
+  color: var(--mt-bg);
+  background: var(--mt-fg);
+  text-decoration: none;
+  text-transform: uppercase;
+  white-space: pre;
+  cursor: pointer;
+  box-shadow: calc(var(--mt-col) / 2) calc(var(--mt-row) / 3) 0 0 var(--mt-shadow, color-mix(in srgb, var(--mt-fg) 35%, var(--mt-bg)));
+  transition: none;
+}
+
+.mt-button:hover {
+  color: var(--mt-bg);
+  background: var(--mt-highlight);
+}
+
+.mt-button:active {
+  translate: calc(var(--mt-col) / 2) calc(var(--mt-row) / 3);
+  box-shadow: none;
+}
+
+.mt-button:disabled,
+.mt-button[aria-disabled="true"] {
+  cursor: not-allowed;
+  background: var(--mt-muted);
+  box-shadow: none;
+}
+
+.mt-button--accent { background: var(--mt-accent); color: var(--mt-on-cyan); }
+.mt-button--band { background: var(--mt-band); color: var(--mt-on-band); }
+.mt-button--danger { background: var(--mt-danger); color: var(--mt-on-red); }
+.mt-button--success { background: var(--mt-success); color: var(--mt-on-green); }
+
+.mt-button--ghost {
+  color: var(--mt-fg);
+  background: transparent;
+  box-shadow: inset 0 0 0 calc(var(--mt-row) / 10) currentColor;
+}
+
+.mt-button--ghost:hover {
+  color: var(--mt-bg);
+  background: var(--mt-fg);
+}
+
+/* Double-size call to action */
+.mt-button--big {
+  font-size: 2em;
+}
+
+/* --------------------------------------------------------------------- */
+/* Menus                                                                  */
+/* --------------------------------------------------------------------- */
+
+/*
+ * <ol class="mt-menu">
+ *   <li><a href="#">Prévisions</a> <span class="mt-menu__hint">1,29 F</span></li>
+ * </ol>
+ */
+.mt-menu {
+  display: grid;
+  gap: var(--mt-menu-gap, var(--mt-row));
+  margin: 0 0 var(--mt-row);
+  padding: 0;
+  list-style: none;
+  counter-reset: mt-menu var(--mt-menu-start, 0);
+}
+
+.mt-menu > li {
+  display: flex;
+  align-items: baseline;
+  gap: var(--mt-col);
+  counter-increment: mt-menu;
+  white-space: pre;
+}
+
+.mt-menu > li::before {
+  content: counter(mt-menu);
+  flex: none;
+  min-width: calc(var(--mt-col) * 4);
+  margin: 0;
+  padding: 0 var(--mt-col);
+  text-align: right;
+  color: var(--mt-bg);
+  background: var(--mt-accent);
+}
+
+.mt-menu > li > a,
+.mt-menu > li > button {
+  appearance: none;
+  padding: 0;
+  border: 0;
+  font: inherit;
+  color: var(--mt-fg);
+  background: none;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.mt-menu > li > a:hover,
+.mt-menu > li > button:hover,
+.mt-menu > li > a:focus-visible,
+.mt-menu > li > button:focus-visible,
+.mt-menu > li[aria-current] > a {
+  color: var(--mt-bg);
+  background: var(--mt-fg);
+  outline: none;
+}
+
+.mt-menu__hint {
+  margin-left: auto;
+  color: var(--mt-highlight);
+}
+
+.mt-menu--compact {
+  --mt-menu-gap: 0;
+}
+
+/* Horizontal navigation bar: 1 Accueil  2 Docs  3 Démos */
+.mt-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 calc(var(--mt-col) * 2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: mt-nav;
+}
+
+.mt-nav > li {
+  counter-increment: mt-nav;
+  white-space: pre;
+}
+
+.mt-nav > li::before {
+  content: counter(mt-nav) " ";
+  color: var(--mt-accent);
+}
+
+.mt-nav a {
+  color: var(--mt-fg);
+  text-decoration: none;
+}
+
+.mt-nav a:hover,
+.mt-nav a[aria-current] {
+  color: var(--mt-bg);
+  background: var(--mt-fg);
+}
+
+/* --------------------------------------------------------------------- */
+/* Forms                                                                  */
+/* --------------------------------------------------------------------- */
+
+/*
+ * <label class="mt-field">
+ *   <span class="mt-field__label">Nom</span>
+ *   <input class="mt-input" style="--len: 20">
+ * </label>
+ * Empty positions show the Minitel's dotted placeholders.
+ */
+.mt-field {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--mt-col);
+  white-space: pre;
+}
+
+.mt-field--block {
+  display: flex;
+}
+
+.mt-field__label {
+  color: var(--mt-accent);
+}
+
+.mt-field__label::after {
+  content: " :";
+}
+
+.mt-input,
+.mt-textarea {
+  --len: 20;
+  appearance: none;
+  display: inline-block;
+  width: calc(var(--len) * var(--mt-col) + 1px);
+  height: var(--mt-row);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  outline: none;
+  font: inherit;
+  line-height: 1;
+  color: var(--mt-fg);
+  caret-color: var(--mt-highlight);
+  background-color: transparent;
+  /* One 2x2-pixel dot per cell, where the font draws its full stop */
+  background-image: linear-gradient(90deg, var(--mt-dot) 0 calc(var(--mt-col) / 4), transparent 0);
+  background-size: var(--mt-col) calc(var(--mt-row) / 5);
+  background-position: calc(var(--mt-col) / 4) calc(var(--mt-row) * 0.6);
+  background-repeat: repeat-x;
+}
+
+.mt-input::placeholder,
+.mt-textarea::placeholder {
+  color: var(--mt-muted);
+  opacity: 1;
+}
+
+.mt-input:focus,
+.mt-textarea:focus {
+  --mt-dot: var(--mt-highlight);
+  color: var(--mt-highlight);
+}
+
+.mt-input:invalid:not(:placeholder-shown) {
+  --mt-dot: var(--mt-danger);
+}
+
+.mt-textarea {
+  --rows: 4;
+  height: calc(var(--rows) * var(--mt-row));
+  resize: none;
+  overflow: hidden;
+  /* One dot per cell on every row */
+  background-image: radial-gradient(circle at 37.5% 70%, var(--mt-dot) 0 calc(var(--mt-row) / 10), transparent calc(var(--mt-row) / 10 + 0.5px));
+  background-size: var(--mt-col) var(--mt-row);
+  background-position: 0 0;
+  background-repeat: repeat;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+/* Checkbox and radio: a cell drawn with font-pixel strokes */
+.mt-check {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--mt-col);
+  cursor: pointer;
+  white-space: pre;
+}
+
+.mt-check > input {
+  appearance: none;
+  position: relative;
+  flex: none;
+  width: var(--mt-col);
+  height: var(--mt-row);
+  margin: 0;
+  cursor: pointer;
+  color: var(--mt-accent);
+  background:
+    linear-gradient(currentColor, currentColor) calc(var(--mt-col) / 8) calc(var(--mt-row) / 10) / calc(var(--mt-col) * 5 / 8) calc(var(--mt-row) / 10) no-repeat,
+    linear-gradient(currentColor, currentColor) calc(var(--mt-col) / 8) calc(var(--mt-row) * 7 / 10) / calc(var(--mt-col) * 5 / 8) calc(var(--mt-row) / 10) no-repeat,
+    linear-gradient(currentColor, currentColor) calc(var(--mt-col) / 8) calc(var(--mt-row) / 10) / calc(var(--mt-col) / 8) calc(var(--mt-row) * 7 / 10) no-repeat,
+    linear-gradient(currentColor, currentColor) calc(var(--mt-col) * 5 / 8) calc(var(--mt-row) / 10) / calc(var(--mt-col) / 8) calc(var(--mt-row) * 7 / 10) no-repeat;
+}
+
+.mt-check > input:checked::after {
+  content: "";
+  position: absolute;
+  left: calc(var(--mt-col) * 2 / 8);
+  top: calc(var(--mt-row) * 2 / 10);
+  width: calc(var(--mt-col) * 3 / 8);
+  height: calc(var(--mt-row) * 5 / 10);
+  background: var(--mt-highlight);
+}
+
+.mt-check > input[type="radio"] {
+  border-radius: 0;
+}
+
+.mt-check > input:focus-visible {
+  outline: calc(var(--mt-row) / 10) solid var(--mt-focus);
+}
+
+/* Select: inverse arrow, native list */
+.mt-select {
+  appearance: none;
+  height: var(--mt-row);
+  padding: 0 calc(var(--mt-col) * 3) 0 0;
+  border: 0;
+  border-radius: 0;
+  font: inherit;
+  line-height: 1;
+  color: var(--mt-fg);
+  /* An inverse cell with a mosaic arrow pointing down */
+  background:
+    conic-gradient(from -45deg at 50% 72%, var(--mt-bg) 0 90deg, transparent 0) right 0 top calc(var(--mt-row) * 0.2) / calc(var(--mt-col) * 2) calc(var(--mt-row) * 0.6) no-repeat,
+    linear-gradient(var(--mt-fg), var(--mt-fg)) right 0 top 0 / calc(var(--mt-col) * 2) 100% no-repeat,
+    transparent;
+  box-shadow: inset 0 calc(var(--mt-row) / -10) 0 var(--mt-dot);
+  cursor: pointer;
+}
+
+.mt-select option {
+  color: var(--mt-fg);
+  background: var(--mt-bg);
+}
+
+/* Prompt line: "Votre choix .. puis ENVOI" */
+.mt-prompt {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--mt-col);
+  white-space: pre;
+}
+
+.mt-prompt > .mt-key:last-child,
+.mt-prompt > .mt-button:last-child {
+  margin-left: auto;
+}
+
+/* --------------------------------------------------------------------- */
+/* Panels, frames, lines                                                  */
+/* --------------------------------------------------------------------- */
+
+/* Pavé: a block of colour with an optional mosaic drop shadow */
+.mt-panel {
+  --mt-panel-bg: var(--mt-band);
+  padding: var(--mt-row) calc(var(--mt-col) * 2);
+  color: var(--mt-on-band);
+  background: var(--mt-panel-bg);
+}
+
+.mt-panel--shadow {
+  box-shadow: calc(var(--mt-col) / 2) calc(var(--mt-row) / 3) 0 0 var(--mt-shadow, color-mix(in srgb, var(--mt-panel-bg) 45%, var(--mt-bg)));
+  margin-right: calc(var(--mt-col) / 2);
+  margin-bottom: calc(var(--mt-row) / 3 + var(--mt-row));
+}
+
+.mt-panel > :last-child {
+  margin-bottom: 0;
+}
+
+.mt-panel--red { --mt-panel-bg: var(--mt-red); color: var(--mt-on-red); }
+.mt-panel--green { --mt-panel-bg: var(--mt-green); color: var(--mt-on-green); }
+.mt-panel--yellow { --mt-panel-bg: var(--mt-yellow); color: var(--mt-on-yellow); }
+.mt-panel--magenta { --mt-panel-bg: var(--mt-magenta); color: var(--mt-on-magenta); }
+.mt-panel--cyan { --mt-panel-bg: var(--mt-cyan); color: var(--mt-on-cyan); }
+.mt-panel--white { --mt-panel-bg: var(--mt-white); color: var(--mt-on-white); }
+
+/* Frame drawn with half-cell mosaic strokes */
+.mt-frame {
+  --mt-frame-color: var(--mt-fg);
+  padding: calc(var(--mt-row) * 2 / 3) calc(var(--mt-col) * 1.5);
+  border: solid var(--mt-frame-color);
+  border-width: calc(var(--mt-row) / 3) calc(var(--mt-col) / 2);
+}
+
+.mt-frame > :last-child {
+  margin-bottom: 0;
+}
+
+.mt-frame__title {
+  display: table;
+  margin: calc(var(--mt-row) * -1) 0 calc(var(--mt-row) * 2 / 3);
+  padding: 0 var(--mt-col);
+  color: var(--mt-bg);
+  background: var(--mt-frame-color);
+  white-space: pre;
+}
+
+/* Mosaic rule: a third of a row, like the sextant strokes */
+.mt-rule {
+  --mt-rule-color: var(--mt-fg);
+  height: var(--mt-row);
+  margin: 0 0 var(--mt-row);
+  border: 0;
+  background: linear-gradient(var(--mt-rule-color), var(--mt-rule-color)) 0 50% / 100% calc(var(--mt-row) / 3) no-repeat;
+}
+
+.mt-rule--top { background-position: 0 0; }
+.mt-rule--bottom { background-position: 0 100%; }
+
+/* Separated mosaics: a dotted rule */
+.mt-rule--dotted {
+  background:
+    repeating-linear-gradient(90deg, var(--mt-rule-color) 0 calc(var(--mt-col) * 3 / 8), transparent 0 calc(var(--mt-col) / 2))
+    0 50% / 100% calc(var(--mt-row) / 5) no-repeat;
+}
+
+/* Checkerboard band of mosaics */
+.mt-rule--checker {
+  height: calc(var(--mt-row) * 2 / 3);
+  background:
+    conic-gradient(var(--mt-rule-color) 25%, transparent 0 50%, var(--mt-rule-color) 0 75%, transparent 0)
+    0 0 / var(--mt-col) calc(var(--mt-row) * 2 / 3);
+}
+
+/* --------------------------------------------------------------------- */
+/* Data display                                                           */
+/* --------------------------------------------------------------------- */
+
+.mt-table {
+  width: 100%;
+  border-collapse: collapse;
+  white-space: pre;
+}
+
+.mt-table th,
+.mt-table td {
+  padding: 0 var(--mt-col) 0 0;
+  text-align: left;
+  vertical-align: baseline;
+}
+
+.mt-table th:first-child,
+.mt-table td:first-child {
+  padding-left: var(--mt-col);
+}
+
+.mt-table thead th {
+  color: var(--mt-bg);
+  background: var(--mt-accent);
+}
+
+.mt-table--zebra tbody tr:nth-child(even) {
+  background: color-mix(in srgb, var(--mt-band) 65%, var(--mt-bg));
+}
+
+.mt-table tbody tr:hover {
+  color: var(--mt-bg);
+  background: var(--mt-fg);
+}
+
+.mt-table .mt-num,
+.mt-num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Dotted leaders: Paris ............ 12° */
+.mt-leaders {
+  margin: 0 0 var(--mt-row);
+  padding: 0;
+  list-style: none;
+}
+
+.mt-leaders > li,
+.mt-leader {
+  display: flex;
+  align-items: baseline;
+  white-space: pre;
+}
+
+.mt-leaders > li::before {
+  content: none;
+}
+
+.mt-leaders > li > :first-child,
+.mt-leader > :first-child {
+  order: 0;
+}
+
+.mt-leaders > li::after,
+.mt-leader::after {
+  content: "";
+  order: 1;
+  flex: 1;
+  min-width: var(--mt-col);
+  height: calc(var(--mt-row) / 5);
+  margin: 0 var(--mt-col);
+  align-self: center;
+  translate: 0 calc(var(--mt-row) / 5);
+  background: linear-gradient(90deg, var(--mt-dot) 0 calc(var(--mt-col) / 4), transparent 0) calc(var(--mt-col) / 4) 0 / var(--mt-col) 100% repeat-x;
+}
+
+.mt-leaders > li > :last-child,
+.mt-leader > :last-child {
+  order: 2;
+  color: var(--mt-highlight);
+}
+
+/* Badge: a short inverse label */
+.mt-badge {
+  display: inline-block;
+  padding: 0 var(--mt-col);
+  color: var(--mt-bg);
+  background: var(--mt-highlight);
+  white-space: pre;
+  line-height: 1;
+}
+
+.mt-badge--accent { background: var(--mt-accent); }
+.mt-badge--danger { background: var(--mt-danger); color: var(--mt-on-red); }
+.mt-badge--success { background: var(--mt-success); color: var(--mt-on-green); }
+.mt-badge--band { background: var(--mt-band); color: var(--mt-on-band); }
+
+/* Progress in half-cell steps: <div class="mt-progress" style="--value: .42"></div> */
+.mt-progress {
+  --value: 0;
+  --mt-progress-color: var(--mt-success);
+  --mt-progress-track: color-mix(in srgb, var(--mt-band) 60%, var(--mt-bg));
+  position: relative;
+  height: var(--mt-row);
+  background: var(--mt-progress-track);
+  overflow: hidden;
+}
+
+.mt-progress::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: round(down, calc(var(--value) * 100%), calc(var(--mt-col) / 2));
+  background: var(--mt-progress-color);
+}
+
+.mt-progress--thin {
+  height: calc(var(--mt-row) / 3);
+  margin-block: calc(var(--mt-row) / 3);
+}
+
+/* Bar chart: <div class="mt-chart"><i style="--v:.6"></i>...</div> */
+.mt-chart {
+  --mt-chart-height: 6;
+  --mt-chart-color: var(--mt-accent);
+  display: flex;
+  align-items: flex-end;
+  gap: 0;
+  height: calc(var(--mt-chart-height) * var(--mt-row));
+}
+
+.mt-chart > * {
+  flex: 0 0 calc(var(--mt-col) / 2);
+  height: round(nearest, calc(var(--v, 0) * 100%), calc(var(--mt-row) / 3));
+  background: var(--mt-chart-color);
+}
+
+.mt-chart--wide > * {
+  flex-basis: var(--mt-col);
+}
+
+/* --------------------------------------------------------------------- */
+/* Messages                                                               */
+/* --------------------------------------------------------------------- */
+
+.mt-message {
+  display: flex;
+  align-items: baseline;
+  gap: var(--mt-col);
+  padding: 0 var(--mt-col);
+  color: var(--mt-bg);
+  background: var(--mt-fg);
+  white-space: pre-wrap;
+}
+
+.mt-message--info { background: var(--mt-accent); color: var(--mt-on-cyan); }
+.mt-message--success { background: var(--mt-success); color: var(--mt-on-green); }
+.mt-message--warning { background: var(--mt-highlight); color: var(--mt-on-yellow); }
+.mt-message--danger { background: var(--mt-danger); color: var(--mt-on-red); }
+
+.mt-message__close {
+  margin-left: auto;
+  padding: 0;
+  border: 0;
+  font: inherit;
+  color: inherit;
+  background: none;
+  cursor: pointer;
+}
+
+/* Dialog: a centred pavé with a mosaic shadow */
+.mt-dialog {
+  max-width: min(calc(36 * var(--mt-col)), 92vw);
+  padding: var(--mt-row) calc(var(--mt-col) * 2);
+  border: 0;
+  color: var(--mt-on-band);
+  background: var(--mt-band);
+  box-shadow: calc(var(--mt-col) / 2) calc(var(--mt-row) / 3) 0 0 color-mix(in srgb, var(--mt-band) 40%, #000);
+  font-family: var(--mt-font);
+  font-size: var(--mt-font-size);
+  line-height: 1;
+}
+
+.mt-dialog::backdrop {
+  background: color-mix(in srgb, #000 70%, transparent);
+}
+
+.mt-dialog__title {
+  margin: 0 0 var(--mt-row);
+  color: var(--mt-highlight);
+  font-stretch: 200%;
+}
+
+/* Tabs: inverse video for the current one */
+.mt-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--mt-col);
+  margin: 0 0 var(--mt-row);
+  padding: 0;
+  list-style: none;
+  border-bottom: calc(var(--mt-row) / 3) solid var(--mt-fg);
+}
+
+.mt-tabs > li::before {
+  content: none;
+}
+
+.mt-tabs a,
+.mt-tabs button {
+  display: block;
+  padding: 0 var(--mt-col);
+  border: 0;
+  font: inherit;
+  color: var(--mt-fg);
+  background: transparent;
+  text-decoration: none;
+  cursor: pointer;
+  white-space: pre;
+}
+
+.mt-tabs [aria-selected="true"],
+.mt-tabs [aria-current] {
+  color: var(--mt-bg);
+  background: var(--mt-fg);
+}
+
+/* Pagination: Page 2/5  SUITE  RETOUR */
+.mt-pager {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--mt-col);
+  white-space: pre;
+}
+
+.mt-pager__count {
+  margin-left: auto;
+  color: var(--mt-highlight);
+}
+
+/* --------------------------------------------------------------------- */
+/* Motion                                                                 */
+/* --------------------------------------------------------------------- */
+
+/* Blinking block cursor */
+.mt-cursor {
+  display: inline-block;
+  width: var(--mt-col);
+  height: var(--mt-row);
+  vertical-align: bottom;
+  background: currentColor;
+  animation: mt-blink-cursor var(--mt-cursor-blink) steps(1, end) infinite;
+}
+
+@keyframes mt-blink-cursor {
+  50% { opacity: 0; }
+}
+
+/* Ticker: scrolls one whole cell at a time, like a Minitel crawl */
+.mt-ticker {
+  --mt-ticker-duration: 18s;
+  --mt-ticker-steps: 160;
+  overflow: hidden;
+  white-space: pre;
+  contain: inline-size; /* never widen the layout */
+}
+
+/* The content enters from the right edge and leaves on the left, in steps. */
+.mt-ticker > * {
+  display: inline-block;
+  padding-left: 100%;
+  animation: mt-ticker var(--mt-ticker-duration) steps(var(--mt-ticker-steps)) infinite;
+}
+
+@keyframes mt-ticker {
+  to { transform: translateX(-100%); }
+}
+
+/* Mosaic spinner: <span class="mt-spinner"></span> */
+.mt-spinner::before {
+  content: "\1FB00";
+  display: inline-block;
+  width: var(--mt-col);
+  animation: mt-spinner 0.9s steps(1, end) infinite;
+}
+
+@keyframes mt-spinner {
+  0% { content: "\1FB00"; }
+  16.6% { content: "\1FB01"; }
+  33.3% { content: "\1FB07"; }
+  50% { content: "\1FB1E"; }
+  66.6% { content: "\1FB0F"; }
+  83.3% { content: "\1FB03"; }
+}
+
+/* Mosaic art block (see <mt-mosaic> and <mt-bigtext>) */
+.mt-mosaic {
+  display: block;
+  margin: 0;
+  font-family: var(--mt-font);
+  line-height: 1;
+  white-space: pre;
+  letter-spacing: 0;
+}
+
+.mt-transparent {
+  background: transparent;
+}

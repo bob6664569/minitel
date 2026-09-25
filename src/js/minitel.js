@@ -63,13 +63,17 @@ export class Minitel extends EventTarget {
   /* Power                                                             */
   /* ---------------------------------------------------------------- */
 
-  async powerOn() {
-    if (this.state !== 'off') return;
+  powerOn() {
+    if (this.state === 'booting') return this.booting;
+    if (this.state !== 'off') return Promise.resolve();
     this.setState('booting');
-    await this.term.powerOn();
-    await wait(250);
-    this.setState('idle');
-    this.showLocal();
+    this.booting = (async () => {
+      await this.term.powerOn();
+      await wait(250);
+      this.setState('idle');
+      this.showLocal();
+    })();
+    return this.booting;
   }
 
   async powerOff() {
@@ -164,7 +168,7 @@ export class Minitel extends EventTarget {
    * connected, as a user would.
    */
   async dial(number, { code, fast = false } = {}) {
-    if (this.state === 'off') await this.powerOn();
+    if (this.state === 'off' || this.state === 'booting') await this.powerOn();
     if (this.state === 'connected') this.hangup({ silent: true });
     if (this.state !== 'idle') return false;
     number = String(number).replace(/\s/g, '');
