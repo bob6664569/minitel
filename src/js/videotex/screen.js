@@ -74,7 +74,17 @@ export class Screen {
     this.revealed = false;
     this.lastChar = ' ';
     this.lastMosaic = false;
+    this.indicator = null;
     this.version = (this.version || 0) + 1;
+  }
+
+  /**
+   * Connection indicator shown by the terminal itself in the last column of
+   * row 0 ('F' offline, 'C' connected); servers cannot overwrite it.
+   */
+  setIndicator(ch) {
+    this.indicator = ch || null;
+    this.markDirty(0);
   }
 
   markDirty(row) {
@@ -356,6 +366,10 @@ export class Screen {
       r.height = cell.height;
       r.partX = cell.partX;
       r.partY = cell.partY;
+      if (row === 0 && c === this.cols - 1 && this.indicator) {
+        Object.assign(r, { char: this.indicator, mosaic: false, fg: 7, bg: 0, flash: false, underline: false, separated: false, conceal: false, width: 1, height: 1, partX: 0, partY: 0 });
+        continue;
+      }
       if (cell.mosaic) {
         r.fg = cell.fg;
         r.bg = cell.bg;
