@@ -269,8 +269,14 @@ body.tt {
     --mt-font-size: 15px;
   }
 
-  .tt-top__title {
+  .tt-top__title,
+  .tt-meter__label {
     display: none;
+  }
+
+  .tt-top__meter {
+    gap: 10px;
+    padding: 4px 8px;
   }
 
   .tt-side,

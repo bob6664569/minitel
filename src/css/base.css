@@ -219,14 +219,22 @@
   user-select: text;
 }
 
-.mt-screen--80 {
-  --mt-cols: 80;
-}
-
 .mt-screen > .mt-page,
 .mt-screen > :where(:not(.mt-page)) {
   --mt-row: calc(100cqi / var(--mt-cols) / 0.8);
   --mt-col: calc(100cqi / var(--mt-cols));
+}
+
+/* 80 columns: same rows, half-width cells (the double-height face at 1em) */
+.mt-screen--80 {
+  --mt-cols: 80;
+}
+
+.mt-screen--80 > .mt-page,
+.mt-screen--80 > :where(:not(.mt-page)) {
+  --mt-row: calc(100cqi / 40 / 0.8);
+  --mt-col: calc(100cqi / 80);
+  font-stretch: 50%;
 }
 
 .mt-page {

@@ -9,6 +9,7 @@
  */
 import { Page, wrap, francs } from './page.js';
 import { Videotex } from '../videotex/writer.js';
+import { Disconnected } from './session.js';
 
 /** Indicative tariffs, in francs per minute (early 1990s). */
 export const TARIFFS = Object.freeze({
@@ -164,7 +165,14 @@ export function kiosk(network, number = '3615') {
         code = null;
         session.write(new Videotex().status(` ${number} ${service.code}`, { color: 'white' }));
         context.onService?.(service);
-        await service.run(session, { ...context, network, number });
+        try {
+          await service.run(session, { ...context, network, number });
+        } catch (failure) {
+          if (failure instanceof Disconnected) throw failure;
+          console.error(`[${service.code}]`, failure);
+          error = `${service.code} : service indisponible`;
+        }
+        session.flush();
         context.onService?.(null);
       }
     },

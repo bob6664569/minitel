@@ -112,6 +112,15 @@ function showMeter({ seconds = 0, cost = 0 } = {}) {
   meterCost.textContent = francs(cost);
 }
 device.addEventListener('mt-tick', (event) => showMeter(event.detail));
+
+const title = document.querySelector('.tt-top__title');
+device.addEventListener('mt-service', (event) => {
+  title.textContent = event.detail ? `${device.minitel.number} ${event.detail.code}` : 'TELETEL';
+});
+device.addEventListener('mt-state', (event) => {
+  if (event.detail === 'connected' && device.minitel.number === '3611') title.textContent = '3611 ANNUAIRE';
+  else if (event.detail !== 'connected') title.textContent = 'TELETEL';
+});
 device.addEventListener('mt-hangup', (event) => showMeter(event.detail));
 
 /* Deep links: ?number=3615&code=METEO (&autostart to skip the power button) */

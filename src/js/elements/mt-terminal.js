@@ -106,6 +106,11 @@ export class MinitelTerminalElement extends HTMLElement {
         this.disconnect();
         this.terminal.destroy();
         this.terminal = null;
+        // A lost WebGL context cannot be reused: start over with a fresh canvas.
+        const canvas = document.createElement('canvas');
+        canvas.setAttribute('part', 'screen');
+        this.canvas.replaceWith(canvas);
+        this.canvas = canvas;
       }
     });
   }
